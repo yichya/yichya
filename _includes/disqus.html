@@ -1,0 +1,25 @@
+{% if site.disqus.shortname %}
+<script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+<div id="vcomments"></div>
+<script>
+    new Valine({
+        el: '#vcomments',
+        appId: 'R0JDTgQqndxD2X8fqSt65B6A-MdYXbMMI',
+        appKey: 'u9AuaRy58zmBjt3sIYxr0wrs',
+        serverURLs: 'https://valine.yichya.dev',
+        visitor: true
+    })
+</script>
+
+{% elsif jekyll.environment != "production" %}
+  <p>
+    You are seeing this because your Disqus shortname is not properly set. To
+    configure Disqus, you should edit your <code>_config.yml</code> to include
+    either a <code>disqus.shortname</code> variable.
+  </p>
+
+  <p>
+    If you do not wish to use Disqus, override the
+    <code>comments.html</code> partial for this theme.
+  </p>
+{% endif %}
