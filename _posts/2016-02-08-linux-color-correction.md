@@ -9,7 +9,9 @@ Asus 的渣笔记本渣屏幕，简直让人心累……虽然 Asus 自带一个
 
 Stanso 推荐我使用这两个工具。RedShift 可以看做是 Flux 的开源版。这个工具通过调整屏幕的色温来改善人眼的观感。
 
-色温是可见光在摄影、录像、出版等领域具有重要应用的特征。光源的色温是通过对比它的色彩和理论的热黑体辐射体来确定的。热黑体辐射体与光源的色彩相匹配时的开尔文温度就是那个光源的色温，它直接和普朗克黑体辐射定律相联系。
+> 色温是可见光在摄影、录像、出版等领域具有重要应用的特征。光源的色温是通过对比它的色彩和理论的热黑体辐射体来确定的。热黑体辐射体与光源的色彩相匹配时的开尔文温度就是那个光源的色温，它直接和普朗克黑体辐射定律相联系。
+> 
+> --- From Wikipedia
 
 【flux 图】
 
@@ -186,6 +188,123 @@ XF86VidModeSetGammaRamp(dpy, screen, ramp_size, r_ramp, g_ramp, b_ramp);
 
 ### ... and RedShift
 
-分析完了 xcalib，我们该来看看 RedShift 了。
+分析完了 xcalib，我们该来看看 RedShift 是怎样完成设置屏幕色温的了。
 
-RedShift 提供了
+RedShift 比 xcalib 支持的屏幕校正方式更多，不过经过我的测试，能够使用的只有 vidmode 和 randr，drm 无法使用。RedShift 默认使用的方式是 randr，因此，我们从 gamma-randr.c 开始阅读。
+
+很快我们就发现了最下面的一个函数：
+
+{% highlight c %}
+int randr_set_temperature(randr_state_t *state, const color_setting_t *setting);
+{% endhighlight %}
+
+从命名来看，它应该就是设置屏幕色温的函数了。这个函数又调用了另一个函数：
+
+{% highlight c %}
+static int randr_set_temperature_for_crtc(randr_state_t *state, int crtc_num, const color_setting_t *setting)；
+{% endhighlight %}
+
+在这个函数中，程序先判断 crtc_num 是否有效，然后获取 crtc 对象，再然后我们看到了很熟悉的 Ramp……
+
+{% highlight c %}
+xcb_randr_crtc_t crtc = state->crtcs[crtc_num].crtc;
+unsigned int ramp_size = state->crtcs[crtc_num].ramp_size;
+
+/* Create new gamma ramps */
+uint16_t *gamma_ramps = malloc(3 * ramp_size * sizeof(uint16_t));
+if (gamma_ramps == NULL) {
+    perror("malloc");
+    return -1;
+}
+
+uint16_t *gamma_r = &gamma_ramps[0 * ramp_size];
+uint16_t *gamma_g = &gamma_ramps[1 * ramp_size];
+uint16_t *gamma_b = &gamma_ramps[2 * ramp_size];
+
+if (state->preserve) {
+    /* Initialize gamma ramps from saved state */
+    memcpy(gamma_ramps, state->crtcs[crtc_num].saved_ramps, 3 * ramp_size * sizeof(uint16_t));
+}
+else {
+    /* Initialize gamma ramps to pure state */
+    for (int i = 0; i < ramp_size; i++) {
+        uint16_t value = (double)i / ramp_size * (UINT16_MAX + 1);
+        gamma_r[i] = value;
+        gamma_g[i] = value;
+        gamma_b[i] = value;
+    }
+}
+
+colorramp_fill(gamma_r, gamma_g, gamma_b, ramp_size, setting);
+
+/* Set new gamma ramps */
+xcb_void_cookie_t gamma_set_cookie = xcb_randr_set_crtc_gamma_checked(state->conn, crtc, ramp_size, gamma_r, gamma_g, gamma_b);
+error = xcb_request_check(state->conn, gamma_set_cookie);
+
+// ...
+{% endhighlight %}
+
+程序先获得了 ramp_size，根据 ramp_size 创建数组，然后判断 state->preserve 并决定是使用已有的 Ramp 还是创建新的 Ramp。*在实际使用中，这里似乎总是创建新的 Ramp……*
+
+然后程序调用了 `colorramp_fill()` 函数。色温值就存储在 setting 指向的一个 color_setting_t 结构体中，那么看来，colorramp_fill 函数对 Ramp 进行了某些处理。
+
+最后程序调用 `xcb_randr_set_crtc_gamma_checked()` 函数将 Ramp 传递给系统。
+
+另外，通过查看 gamma-vidmode.c 我们发现，vidmode 模式在这里使用了我们上面提到的 `XF86VidModeSetGammaRamp()` 函数来完成设置 Ramp 的功能。*早知道就直接看 gamma-vidmode.c 了。*
+
+那么，我们就应该仔细的看一看 colorramp_fill 函数究竟做了些什么。它应该就是与色温设置相关运算的核心了。
+
+打开 colorramp.c，最先看到的是一个相当大的数组。
+
+{% highlight c %}
+/* Whitepoint values for temperatures at 100K intervals.
+   These will be interpolated for the actual temperature.
+   This table was provided by Ingo Thies, 2013. See
+   the file README-colorramp for more information. */
+static const float blackbody_color[] = {
+	1.00000000,  0.18172716,  0.00000000, /* 1000K */
+	1.00000000,  0.25503671,  0.00000000, /* 1100K */
+	1.00000000,  0.30942099,  0.00000000, /* 1200K */
+	1.00000000,  0.35357379,  0.00000000, /* ...   */
+	1.00000000,  0.39091524,  0.00000000,
+	1.00000000,  0.42322816,  0.00000000,
+
+// ... 
+{% endhighlight %}
+
+上面提到过：
+
+> 光源的色温是通过对比它的色彩和理论的热黑体辐射体来确定的。
+
+这个数组中就存储了各种色温对应黑体辐射的 gamma 值，每 100K 为一档。
+
+下面有这样的两个函数（其实是三个不过有一个用不上）：
+
+{% highlight c %}
+
+static void interpolate_color(float a, const float *c1, const float *c2, float *c) {
+	c[0] = (1.0 - a) * c1[0] + a * c2[0];
+	c[1] = (1.0 - a) * c1[1] + a * c2[1];
+	c[2] = (1.0 - a) * c1[2] + a * c2[2];
+}
+
+/* Helper macro used in the fill functions */
+#define F(Y, C)  pow((Y) * setting->brightness * white_point[C], 1.0 / setting->gamma[C])
+
+void colorramp_fill(uint16_t *gamma_r, uint16_t *gamma_g, uint16_t *gamma_b, int size, const color_setting_t *setting) {
+	/* Approximate white point */
+	float white_point[3];
+	float alpha = (setting->temperature % 100) / 100.0;
+	int temp_index = ((setting->temperature - 1000) / 100) * 3;
+	interpolate_color(alpha, &blackbody_color[temp_index], &blackbody_color[temp_index+3], white_point);
+
+	for (int i = 0; i < size; i++) {
+		gamma_r[i] = F((double)gamma_r[i] / (UINT16_MAX + 1), 0) * (UINT16_MAX + 1);
+		gamma_g[i] = F((double)gamma_g[i] / (UINT16_MAX + 1), 1) * (UINT16_MAX + 1);
+		gamma_b[i] = F((double)gamma_b[i] / (UINT16_MAX + 1), 2) * (UINT16_MAX + 1);
+	}
+}
+
+{% endhighlight %}
+
+*一看数学计算我就头疼啊。*
