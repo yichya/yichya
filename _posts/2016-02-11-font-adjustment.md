@@ -10,4 +10,4 @@ Linux 下的字体调整比我想的还是要简单一些。
 * <http://www.cnblogs.com/youxia/p/linux004.html>
 * <http://www.cnblogs.com/youxia/p/linux005.html>
 
-
+<!-- more -->
