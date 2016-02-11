@@ -166,7 +166,7 @@ for (j = 0; j < nEntries; j++) {
 
 xcalib_state.gamma_cor 如果没有在命令行中特殊指定的话则取默认值 1.0，那么公式就是这样的：
 
-<pre>rRamp[j] = rMin + (rMax - rMin) * (j / 256) ^ rGamma</pre>
+`rRamp[j] = rMin + (rMax - rMin) * (j / 256) ^ rGamma`
 
 为什么是指数关系呢？这个是 CRT 显示器的设计决定的，制定标准时也考虑到了这一点，感兴趣的朋友可以自行 Google 搜索。
 
@@ -200,7 +200,7 @@ xcalib_state.gamma_cor 如果没有在命令行中特殊指定的话则取默认
 
 {% highlight c %}
 XF86VidModeSetGammaRamp(dpy, screen, ramp_size, r_ramp, g_ramp, b_ramp);
-{% end highlight %}
+{% endhighlight %}
 
 这样 xcalib 在 Linux 平台上的整个流程我们就基本上分析完成了。xcalib 还提供了一些命令行参数用于指定每一个通道的 Gamma 修正值、亮度等，全都是简单的数学运算，我们就不再分析了。
 
