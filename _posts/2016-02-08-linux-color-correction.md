@@ -52,9 +52,6 @@ Stanso 推荐我使用这两个工具。RedShift 可以看做是 Flux 的开源�
 
 我们首先发现了这样一个调用：
 {% highlight c %}
-
-// ...
-
 r_ramp = (unsigned short *) malloc (ramp_size * sizeof (unsigned short));
 g_ramp = (unsigned short *) malloc (ramp_size * sizeof (unsigned short));
 b_ramp = (unsigned short *) malloc (ramp_size * sizeof (unsigned short));
@@ -68,9 +65,8 @@ if ((i = read_vcgt_internal(in_name, r_ramp, g_ramp, b_ramp, ramp_size)) <= 0) {
     if (i == 0) {
         warning ("No calibration data in ICC profile '%s' found", in_name);
     }
-
+    
 // ...
-
 {% endhighlight %}
 
 前面有一个将 args[] 最后一个元素复制到 in_name 中的操作，那么看来这个 read_vcgt_internal() 大概是与读取文件相关的操作了。
@@ -92,9 +88,6 @@ int read_vcgt_internal(const char * filename, u_int16_t * rRamp, u_int16_t * gRa
 首先，程序跳过文件的头部 128 字节，然后读取接下来的一个表：
 
 {% highlight c %}
-
-// ...
-
 bytesRead = fread(cTmp, 1, 4, fp);
 numTags = BE_INT(cTmp);
 for (i = 0; i < numTags; i++) {
@@ -104,9 +97,8 @@ for (i = 0; i < numTags; i++) {
     tagOffset = BE_INT(cTmp); 
     bytesRead = fread(cTmp, 1, 4, fp);
     tagSize = BE_INT(cTmp);
-    
+   
 // ...
-
 {% endhighlight %}
 
 这个表中包含了文件中所有小节的名称、偏移量和长度。
@@ -116,9 +108,6 @@ for (i = 0; i < numTags; i++) {
 mLUT 中直接包含了 LUT 信息，可以直接当做 Ramp 传递给系统。
 
 {% highlight c %}
-
-// ...
-
 message("mLUT found (Profile Mechanic)\n");
 redRamp = (unsigned short *) malloc ((256) * sizeof (unsigned short));
 greenRamp = (unsigned short *) malloc ((256) * sizeof (unsigned short));
@@ -136,9 +125,6 @@ for (j = 0; j < 256; j++) {
     bytesRead = fread(cTmp, 1, 2, fp);
     blueRamp[j]= BE_SHORT(cTmp);
 }
-
-// ...
-
 {% endhighlight %}
 
 而 VCGT 则又不太一样。
@@ -151,17 +137,11 @@ VCGT 节中的第一个数据叫做 gammaType，它代表着这个 VCGT 节中�
 对于公式法，程序读出该公式需要的 9 个参数后，带入公式计算得到一条曲线：
 
 {% highlight c %}
-
-// ...
-
 for (j = 0; j < nEntries; j++) {
     rRamp[j] = 65536.0 * ((double) pow ((double) j / (double) (nEntries), rGamma * (double) xcalib_state.gamma_cor) * (rMax - rMin) + rMin);
     gRamp[j] = 65536.0 * ((double) pow ((double) j / (double) (nEntries), gGamma * (double) xcalib_state.gamma_cor) * (gMax - gMin) + gMin);
     bRamp[j] = 65536.0 * ((double) pow ((double) j / (double) (nEntries), bGamma * (double) xcalib_state.gamma_cor) * (bMax - bMin) + bMin);
 }
-
-// ...
-
 {% endhighlight %}
 
 xcalib_state.gamma_cor 如果没有在命令行中特殊指定的话则取默认值 1.0，那么公式就是这样的：
