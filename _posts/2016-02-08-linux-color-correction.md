@@ -19,3 +19,35 @@ Stanso 推荐我使用这两个工具。RedShift 可以看做是 Flux 的开源�
 
 （来自 <http://www.techmind.org/colour/coltemp.html>）
 
+我的屏幕看起来蓝色色光的成分比较重，也就是说屏幕颜色偏冷。将色温调整到 5000K 左右时，屏幕的观感有了明显的改善。相当长的一段时间内，我就一直使用这两个工具维持屏幕色温。
+
+<!-- more -->
+
+### ColorSync
+
+装了黑苹果，瞎玩的时候发现了苹果的显示器颜色校正工具。其实 Windows 也自带一个，但是那个工具基本上等于没有。但是我利用苹果的工具很顺利的将屏幕的颜色调整到了一个颇为顺眼的状态。
+
+之后我将黑苹果下的显示器颜色配置导出为了一个 icc 配置文件，然后导入到 Windows 中。于是，我在 Windows 下也获得了相对正常的颜色响应。
+
+将这一配置文件应用到 Linux 却颇费了些周折。xcalib 工具可以满足我们的需求，但是它会与 nvidia 的闭源驱动产生冲突，因此只能在使用 Intel 集成显卡的时候使用 xcalib 工具。同样，RedShift 工具与 nvidia 闭源驱动的兼容性也相当差劲。*还好我平时几乎不开独立显卡。*
+
+### How about using both tools at the same time?
+
+校正屏幕颜色后，似乎 Flux 也就没有什么用武之地了。不过，Flux 的核心功能在于根据经度计算日出日落时间，然后按照某一算法计算出当前屏幕最适合的色温。这个功能似乎还是挺有用的，在 iOS 的最新版本中也添加了这一功能，苹果还顺便把 Flux 下架了。据说因为这个，苹果还被 Flux 的开发商告上了法庭。
+
+在 Windows 下，Flux 可以非常愉快的与 Windows 自带的颜色管理工具结合工作，按照我们期望的方式调节色温。然而在 Linux 下，RedShift 与 xcalib 并不能愉快的协同工作，RedShift 每次调整屏幕色温时都会导致 xcalib 的屏幕颜色校正失效。
+
+那么，我们如何解决这一问题呢？这一问题的原因又究竟是什么呢？
+
+### Taking a closer look into xcalib
+
+要解决上一节提到的问题，我们就应该先了解 RedShift 和 xcalib 究竟都做了些什么。两个软件都是开源的，可以很容易的找到源代码。
+
+* **xcalib**: <https://github.com/OpenICC/xcalib/>
+* **RedShift**: <https://github.com/jonls/redshift/>
+
+我们先来看看 xcalib 是如何读取 ICC 文件并要求系统应用其中的参数吧。
+
+打开 xcalib.c，查看 int main()，跳过所有与 Win32 和 fglrx 相关的部分。
+
+我们首先发现了这样一个调用：
