@@ -166,7 +166,46 @@ for (j = 0; j < nEntries; j++) {
 
 xcalib_state.gamma_cor 如果没有在命令行中特殊指定的话则取默认值 1.0，那么公式就是这样的：
 
-*wtf*
+<pre>rRamp[j] = rMin + (rMax - rMin) * (j / 256) ^ rGamma</pre>
 
-<pre>rRamp[j] = rMin + (rMax - rMin) \* (j / 256) ^ rGamma</pre>
+为什么是指数关系呢？这个是 CRT 显示器的设计决定的，制定标准时也考虑到了这一点，感兴趣的朋友可以自行 Google 搜索。
 
+用电子表格软件根据这个公式计算得到对应的 768 个点，绘制一下，图像大概是这个样子的：
+
+【曲线图】
+
+其中三条曲线的 Min 均为 0，Max 均为 1，Gamma 从上往下依次为 0.5，1，1.5。
+
+常识告诉我们，Gamma 越低，屏幕看起来显得越黑暗。从这个公式看来，Gamma 值的降低，使对应曲线低亮度的部分所占比重更高，也就使屏幕看起来更黑暗。
+
+一个简单的公式似乎并不能满足对屏幕颜色进行精确校正的需求，那么就需要使用 VideoCardGammaTable 了。
+
+对于 Table，我们要先读出通道数、点数与每一个点的大小。确定这三个值之后，程序就按顺序将后面的表格整体读出来。有时候这个表中记录的数量可能与系统要求的数量不同，程序在后面通过简单的修正获得适合系统的一条曲线。
+
+我手中的这个 ICC 文件中的 VCGT 节就是一个 VideoCardGammaTable。我将其中的数据读出之后，用电子表格软件绘制如图：
+
+【曲线图 2】
+
+*为什么 LibreOffice Calc 不能改线的颜色……*
+
+三根曲线中，从右侧看最高的一根是 R 通道，中间的是 G 通道，最低的是 B 通道。我试图把三条线的颜色改为对应通道的颜色，但是没能成功。
+
+直接使用 dispcalGUI 中自带的 Curve Viewer 打开对应的 ICC 文件，也可以看到相同的一条曲线，这说明我们的分析是正确的。
+
+【曲线图 3】
+
+苹果的校正程序整体上调高了我的屏幕的 Gamma 值，强化了 R 通道，弱化了 G 和 B 通道，使屏幕不再明显的泛着蓝光。
+
+读出 VCGT 并处理后我们就得到了 Ramp。再调用一下 X11 提供的一个 API，将 Ramp 发送给 X 服务器，就可以完成显示修正工作。
+
+{% highlight c %}
+XF86VidModeSetGammaRamp(dpy, screen, ramp_size, r_ramp, g_ramp, b_ramp);
+{% end highlight %}
+
+这样 xcalib 在 Linux 平台上的整个流程我们就基本上分析完成了。xcalib 还提供了一些命令行参数用于指定每一个通道的 Gamma 修正值、亮度等，全都是简单的数学运算，我们就不再分析了。
+
+### ... and RedShift
+
+分析完了 xcalib，我们该来看看 RedShift 了。
+
+RedShift 提供了
