@@ -9,13 +9,15 @@ comments: false
 modified: 2016-02-11
 ---
 
-yichya QC
-
 > A good soldier knows there's only one thing he can rely on when the chips are down: Not his cutting-edge intel, not his state of the art equipment, and not his top of the line weapon. Just himself: It took me a long time to remember that. 
 >
 > --- Laurence "Prophet" Barnes
 
 ### Overview
+
+yichya QC
+
+Xidian University, Software Engineering
 
 一个无聊的人。
 
