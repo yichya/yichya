@@ -9,10 +9,6 @@ comments: false
 modified: 2016-02-11
 ---
 
-> A good soldier knows there's only one thing he can rely on when the chips are down: Not his cutting-edge intel, not his state of the art equipment, and not his top of the line weapon. Just himself: It took me a long time to remember that. 
->
-> --- Laurence "Prophet" Barnes
-
 ### Overview
 
 yichya QC
@@ -74,3 +70,9 @@ Starcraft 2 剧情党。
 偶尔玩 FPS，最喜欢 Crysis。
 
 Steam 上还有 Just Cause 3 等一些游戏，求一波好友。
+
+### Motto
+
+> A good soldier knows there's only one thing he can rely on when the chips are down: Not his cutting-edge intel, not his state of the art equipment, and not his top of the line weapon. Just himself: It took me a long time to remember that. 
+>
+> --- Laurence "Prophet" Barnes
