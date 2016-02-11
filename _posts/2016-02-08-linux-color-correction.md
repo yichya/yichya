@@ -166,7 +166,7 @@ for (j = 0; j < nEntries; j++) {
 
 xcalib_state.gamma_cor 如果没有在命令行中特殊指定的话则取默认值 1.0，那么公式就是这样的：
 
-`rRamp[j] = rMin + (rMax - rMin) * (j / 256) ^ rGamma`
+`rRamp[j] = rMin + (rMax - rMin) \* (j / 256) ^ rGamma`
 
 为什么是指数关系呢？这个是 CRT 显示器的设计决定的，制定标准时也考虑到了这一点，感兴趣的朋友可以自行 Google 搜索。
 
