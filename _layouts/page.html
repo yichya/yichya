@@ -22,7 +22,13 @@
         {% if page.share != false %}{% include social-share.html %}{% endif %}
       </footer>
     </div><!-- /.entry-content -->
-    {% if page.comments != false %}<section id="disqus_thread"></section><!-- /#disqus_thread -->{% endif %}
+    {% if page.comments != false %}
+        <section id="disqus_thread">
+            <!-- 多说评论框 start -->
+	           <div class="ds-thread" data-thread-key="{{ page.id }}" data-title="{{ page.title }}" data-url="{{ page.url }}"></div>
+            <!-- 多说评论框 end -->
+        </section><!-- /#disqus_thread -->
+    {% endif %}
   </article>
 </div><!-- /#main -->
 
