@@ -307,6 +307,37 @@ void colorramp_fill(uint16_t *gamma_r, uint16_t *gamma_g, uint16_t *gamma_b, int
 
 {% endhighlight %}
 
-*一看数学计算我就头疼啊。*
+函数 `interpolate_color()` 是用于处理色温值不是 100 的整数时的情况使用的。它用相邻的两个色温的 Gamma 值进行 Alpha 混合，得到一个过渡的 Gamma 值并赋值给数组 white_point。当色温值已经为整数时，Alpha 混合时对应通道的透明度就已经是 100% 了，可以看做没有进行混合运算。
 
-把代码翻译成人话，是这样的：
+下面的一个 for 循环就是主要的处理代码了。用人话说，就是这个样子的：
+
+`gamma_r[i] = (gamma_r[i] * brightness * white_point[0]) ^ (1 / gamma)`
+
+其中 brightness 和 gamma 我们可以从 RedShift 的用法说明中看到：
+
+{% highlight bash %}
+...
+
+-b DAY:NIGHT	Screen brightness to apply (between 0.1 and 1.0)
+-c FILE	Load settings from specified configuration file
+-g R:G:B	Additional gamma correction to apply
+
+...
+{% endhighlight %}
+
+也就是说 RedShift 提供了参数供我们进行额外的 Gamma 修正。如果不指定的话，这些数值都会取默认 1.0，那么公式可以进一步化简：
+
+`gamma_r[i] = gamma_r[i] * white_point[0]`
+
+也就是说，色温的处理实际上是对三条曲线乘上了一个特定的常数，以改变曲线的形态。
+
+对于我之前读出的那条曲线，可以认为它是 6500K 色温下的曲线。我们将屏幕色温设置为 5000K，重新读一条曲线：
+
+【曲线图 4】
+
+（对应 5000K 色温的 Gamma 值：`1.00000000,  0.90198230,  0.81465502, /* 5000K */`）
+
+可以很直观的看到，较低的色温在原始曲线的基础上弱化了 G 和 B 通道。这也说明，降低色温确实对修正我的屏幕有一定的正面作用。
+
+RedShift 的核心部分到这里也就分析完成了。它还有一些根据经度确定日出日落时间的功能，我们就不再分析了。
+
