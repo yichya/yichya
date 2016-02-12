@@ -13,11 +13,11 @@ Stanso 推荐我使用这两个工具。RedShift 可以看做是 Flux 的开源�
 > 
 > --- From Wikipedia
 
-【flux 图】
+![flux](http://blog.yichyaqc.cn/assets/images/linux-color-correction/flux-accion.png)
 
 在这里有一张图，可以将色温与辐射颜色简单对应。
 
-【色温图】
+![blackbody](http://blog.yichyaqc.cn/assets/images/linux-color-correction/blackbody.png)
 
 （来自 <http://www.techmind.org/colour/coltemp.html>）
 
@@ -154,7 +154,7 @@ xcalib_state.gamma_cor 如果没有在命令行中特殊指定的话则取默认
 
 用电子表格软件根据这个公式计算得到对应的 768 个点，绘制一下，图像大概是这个样子的：
 
-【曲线图】
+![curve-1](http://blog.yichyaqc.cn/assets/images/linux-color-correction/curve-1.png)
 
 其中三条曲线的 Min 均为 0，Max 均为 1，Gamma 从上往下依次为 0.5，1，1.5。
 
@@ -166,7 +166,7 @@ xcalib_state.gamma_cor 如果没有在命令行中特殊指定的话则取默认
 
 我手中的这个 ICC 文件中的 VCGT 节就是一个 VideoCardGammaTable。我将其中的数据读出之后，用电子表格软件绘制如图：
 
-【曲线图 2】
+![curve-2](http://blog.yichyaqc.cn/assets/images/linux-color-correction/curve-2.png)
 
 *为什么 LibreOffice Calc 不能改线的颜色……*
 
@@ -174,7 +174,7 @@ xcalib_state.gamma_cor 如果没有在命令行中特殊指定的话则取默认
 
 直接使用 dispcalGUI 中自带的 Curve Viewer 打开对应的 ICC 文件，也可以看到相同的一条曲线，这说明我们的分析是正确的。
 
-【曲线图 3】
+![curve-3](http://blog.yichyaqc.cn/assets/images/linux-color-correction/curve-3.png)
 
 苹果的校正程序整体上调高了我的屏幕的 Gamma 值，强化了 R 通道，弱化了 G 和 B 通道，使屏幕不再明显的泛着蓝光。
 
@@ -333,7 +333,7 @@ void colorramp_fill(uint16_t *gamma_r, uint16_t *gamma_g, uint16_t *gamma_b, int
 
 对于我之前读出的那条曲线，可以认为它是 6500K 色温下的曲线。我们将屏幕色温设置为 5000K，重新读一条曲线：
 
-【曲线图 4】
+![curve-4](http://blog.yichyaqc.cn/assets/images/linux-color-correction/curve-4.png)
 
 （对应 5000K 色温的 Gamma 值：`1.00000000,  0.90198230,  0.81465502, /* 5000K */`）
 
