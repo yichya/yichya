@@ -319,8 +319,8 @@ void colorramp_fill(uint16_t *gamma_r, uint16_t *gamma_g, uint16_t *gamma_b, int
 ...
 
 -b DAY:NIGHT	Screen brightness to apply (between 0.1 and 1.0)
--c FILE	Load settings from specified configuration file
--g R:G:B	Additional gamma correction to apply
+-c FILE	        Load settings from specified configuration file
+-g R:G:B	    Additional gamma correction to apply
 
 ...
 {% endhighlight %}
@@ -341,3 +341,38 @@ void colorramp_fill(uint16_t *gamma_r, uint16_t *gamma_g, uint16_t *gamma_b, int
 
 RedShift 的核心部分到这里也就分析完成了。它还有一些根据经度确定日出日落时间的功能，我们就不再分析了。
 
+### Do it myself
+
+回到上面提到的问题：为什么 RedShift 不能与 xcalib 协同工作呢？
+
+在分析 RedShift 的代码时，我们看到：
+
+{% highlight c %}
+if (state->preserve) {
+    /* Initialize gamma ramps from saved state */
+    memcpy(gamma_ramps, state->crtcs[crtc_num].saved_ramps, 3 * ramp_size * sizeof(uint16_t));
+}
+else {
+    /* Initialize gamma ramps to pure state */
+    for (int i = 0; i < ramp_size; i++) {
+        uint16_t value = (double)i / ramp_size * (UINT16_MAX + 1);
+        gamma_r[i] = value;
+        gamma_g[i] = value;
+        gamma_b[i] = value;
+    }
+}
+{% endhighlight %}
+
+如果 state->preserve 的值为 True，程序就不会重新创建一个 Ramp。遗憾的是，这个条件我们无法手工指定，不得不看系统的面子。在 vidmode 模式下，也有一个同样的判断条件，同样我们也无法进行干涉。
+
+既然我们分析清楚了 xcalib 和 RedShift 的运作机制，却又不能改变它，我们干脆自己写一个程序来完成以上的两件事情。
+
+这个程序需要做的事情是这样的：
+
+1. 从 ICC 文件中读取 VCGT 表，获得 Ramp。
+2. 对 Ramp 应用色温相关的处理。
+3. 将处理后的 Ramp 传递给系统。
+
+程序比较简单，这里就不再赘述了。我用 C++ 重新实现了部分流程，在我的 Ubuntu 15.10 上测试通过。
+
+代码可以在我的 GitCafe（<https://gitcafe.com/yichya/IccReader>）上找到。
