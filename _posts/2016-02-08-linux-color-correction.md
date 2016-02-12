@@ -201,7 +201,7 @@ int randr_set_temperature(randr_state_t *state, const color_setting_t *setting);
 从命名来看，它应该就是设置屏幕色温的函数了。这个函数又调用了另一个函数：
 
 {% highlight c %}
-static int randr_set_temperature_for_crtc(randr_state_t *state, int crtc_num, const color_setting_t *setting)；
+static int randr_set_temperature_for_crtc(randr_state_t *state, int crtc_num, const color_setting_t *setting);
 {% endhighlight %}
 
 在这个函数中，程序先判断 crtc_num 是否有效，然后获取 crtc 对象，再然后我们看到了很熟悉的 Ramp……
@@ -296,7 +296,7 @@ void colorramp_fill(uint16_t *gamma_r, uint16_t *gamma_g, uint16_t *gamma_b, int
 	float white_point[3];
 	float alpha = (setting->temperature % 100) / 100.0;
 	int temp_index = ((setting->temperature - 1000) / 100) * 3;
-	interpolate_color(alpha, &blackbody_color[temp_index], &blackbody_color[temp_index+3], white_point);
+	interpolate_color(alpha, &blackbody_color[temp_index], &blackbody_color[temp_index + 3], white_point);
 
 	for (int i = 0; i < size; i++) {
 		gamma_r[i] = F((double)gamma_r[i] / (UINT16_MAX + 1), 0) * (UINT16_MAX + 1);
@@ -308,3 +308,5 @@ void colorramp_fill(uint16_t *gamma_r, uint16_t *gamma_g, uint16_t *gamma_b, int
 {% endhighlight %}
 
 *一看数学计算我就头疼啊。*
+
+把代码翻译成人话，是这样的：
