@@ -29,7 +29,7 @@
         {% if page.comments != false %}
         <section id="disqus_thread">
             <!-- 多说评论框 start -->
-	           <div class="ds-thread" data-thread-key="{{ page.id }}" data-title="{{ page.title }}" data-url="{{ page.url }}"></div>
+	           <div class="ds-thread" data-thread-key="{{ page.id }}" data-title="{{ page.title }}" data-url="{{ site.url}}{{ page.url }}"></div>
             <!-- 多说评论框 end -->
         </section><!-- /#disqus_thread -->
     {% endif %}
