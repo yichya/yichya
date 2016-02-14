@@ -9,13 +9,13 @@ title: 定制 OpenWrt 固件 (1) 透明代理
 
 顺便预告一下：下一次介绍集成 ADBYBY 和 KMS 服务器，当然下一次我会换新买的 7620n SoC 的路由器来演示；之后我会以集成石像鬼 QoS 为例介绍一下 OpenWrt 的 BuildRoot。
 
-### Repeater
+## Repeater
 
 现在市面上能买到的很多路由器都支持中继模式，我手里这台 HG556a ver.C 在更新到 OpenWrt Chaos Calmer 正式版之后居然也支持了。实测中继模式运行完美，美滴很。
 
 本来我还不得不插上一个 Atheros 的无线网卡进行中继呢，现在倒是省事了。
 
-### Transparent Proxy
+## Transparent Proxy
 
 所谓透明代理，就是说，用户完全感受不到代理的存在，但是又能享受代理提供的网络服务。
 
@@ -23,7 +23,7 @@ title: 定制 OpenWrt 固件 (1) 透明代理
 
 <!-- more -->
 
-### OpenWrt ImageBuilder
+## OpenWrt ImageBuilder
 
 这次我们的定制选择使用 OpenWrt ImageBuilder 进行。因为 Build 的是 Chaos Calmer 正式版映像，没有必要从源代码开始编译。如果是 Trunk 的话，由于内核版本迭代非常快，建议从源代码开始编译。
 
@@ -160,7 +160,7 @@ drwxrwxr-x 3 yichya yichya    4096  2月 13 15:17 ../
 
 当然，这个固件的功能非常简单，简单到连 Web 界面都没有。想要设置只能通过 ssh 连接到路由，通过手动修改 /etc/config 下的配置文件完成对路由器的设置。
 
-### Get Started
+## Get Started
 
 上一步中我们定制的固件功能缺乏，以至于很难满足普通用户的正常使用需求。因此，我们需要增加固件中包含的软件包数量。
 
@@ -217,7 +217,129 @@ $ make image PROFILE="HG556a_C"
 
 很快就得到了一个我们定制好的映像。
 
+## Add repositories from blocked sources
 
+准备透明代理则稍微复杂了那么一点儿。参考来自 <https://cokebar.info/archives/664> 的教程，我们需要再安装以下几个包：
 
+* ip 
+* ipset
+* libopenssl
+* iptables-mod-tproxy
 
+以及来自第三方的
 
+* shadowsocks-libev-spec
+* ChinaDNS
+* luci-app-shadowsocks
+* luci-app-chinadns
+
+将上面几个软件包添加到 target profile 中就可以实现自动安装了。
+
+不过，麻烦的事情在于，第三方的源是直接被 GFW 拉黑的 sourceforge。
+
+再 repositories.conf 中添加以下两个源：
+
+{% highlight bash %}
+# ShadowSocks
+src/gz openwrt_dist http://openwrt-dist.sourceforge.net/releases/brcm63xx/packages
+src/gz openwrt_dist_luci http://openwrt-dist.sourceforge.net/releases/luci/packages
+{% endhighlight %}
+
+直接 make image 的话，在从上面两个源更新列表时会卡住很久，不得不按 Ctrl + C 终止。
+
+{% highlight bash %}
+Downloading http://openwrt-dist.sourceforge.net/releases/brcm63xx/packages/Packages.gz.
+^CMakefile:100: recipe for target '_call_image' failed
+make[1]: *** [_call_image] Interrupt
+Makefile:178: recipe for target 'image' failed
+make: *** [image] 中断
+
+{% endhighlight %}
+
+在这里为了解决在终端下使用代理的问题，我们需要使用一个叫做 proxychains 的工具，它可以支持 SOCKS5 全局代理。
+
+安装 proxychains：
+
+{% highlight bash %}
+sudo apt-get install proxychains
+{% endhighlight %}
+
+修改 proxychains 的配置文件 /etc/proxychains.conf
+
+{$ highlight bash %}
+strict_chain
+proxy_dns 
+remote_dns_subnet 224
+tcp_read_time_out 15000
+tcp_connect_time_out 8000
+localnet 127.0.0.0/255.0.0.0
+quiet_mode
+
+[ProxyList]
+socks5  127.0.0.1 1080
+{% endhighlight %}
+
+然后在 make image 时使用这样的命令：
+
+{% highlight bash %}
+$ proxychains make image PROFILE="HG556a_C"
+{% endhighlight %}
+
+## Configure Transparent Proxy
+
+制作好了能够完成透明代理的固件，我们还需要进行一些配置，才能顺利的实现透明代理。
+
+### Enable ShadowSocks
+
+在服务页面中选择 ShadowSocks，填写好基本配置。
+
+![shadowsocks-1](http://blog.yichyaqc.cn/assets/images/openwrt-customize-1/ss-1.png)
+
+### Enable ChinaDNS
+
+ChinaDNS 的配置有以下几种可选方案：
+
+* 直接在墙外的远程主机上搭建 DNS 缓存服务器，使用其他的端口。
+* 利用 ShadowSocks 转发 UDP 53 端口。
+* 直接连接到外部 DNS 服务器，在 DNS 查询时不利用 ShadowSocks。
+* 利用 TCP 方式完成 DNS 查询。
+
+对于各种方式的优缺点，引用原文：
+
+> 前两种方案可以有效避免 GFW 造成的 DNS 污染，此时 ChinaDNS 的作用完全就是为国外站点做解析优化，因为 DNS 查询由代理服务器转发，DNS 查询的发起者相当于代理服务器，获得的解析结果都是就近于代理服务器的；
+>
+> 而方案三则会直面 DNS 污染，此时 ChinaDNS 的防污染功能发挥作用，同时方案三无法做到国外网站解析结果优化，因为获得的 IP 是就近于你的位置的。
+>
+> 方案四则可以有效的避免国外 DNS 的污染，不过同样也无法做到国外网站解析结果优化。
+
+而且，方案四还有一个严重的问题：慢。
+
+我的 ShadowSocks 服务器并没有搭建 DNS 缓存（我也搭不了，不是我的），但是支持 UDP 端口转发，因此，我们选择第二种方案。
+
+在服务页面中选择 ShadowSocks，填写好 UDP 端口转发配置，将 UDP 5300 转发到 Google 公共 DNS 即可。
+
+![shadowsocks-2](http://blog.yichyaqc.cn/assets/images/openwrt-customize-1/ss-2.png)
+
+然后配置 ChinaDNS，设置上游 DNS 为一个国内 DNS 和我们转发的 DNS（即 127.0.0.1:5300）。Local Port 就是 ChinaDNS 提供服务的端口，这里默认 5353 即可。Bidirectional Filter 建议打开，可以减少受到 DNS 污染的几率，但是可能会减慢部分网站访问速度。
+
+![chinadns](http://blog.yichyaqc.cn/assets/images/openwrt-customize-1/chinadns.png)
+
+### Configure DnsMasq
+
+最后配置 dnsmasq 将所有的 DNS 请求转发给 ChinaDNS 的 5353 端口。
+
+![dns](http://blog.yichyaqc.cn/assets/images/openwrt-customize-1/dns.png)
+
+确定 ChinaDNS 和 ShadowSocks 都已经启动并正常工作，即可享受透明代理带来的愉悦啦。
+
+## Speed Test
+
+我们利用国内外两个网速测试工具进行速度测试。
+
+国内的网站可以自动识别到国内，不经过代理，不影响速度。
+
+![speedtest-inside](http://blog.yichyaqc.cn/assets/images/openwrt-customize-1/speedtest_inside.png)
+
+国外的网站自动通过代理访问，实现自动翻墙。
+
+![speedtest-outside](http://blog.yichyaqc.cn/assets/images/openwrt-customize-1/speedtest_outside.png)
