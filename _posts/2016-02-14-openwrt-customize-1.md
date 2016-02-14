@@ -21,6 +21,8 @@ title: 定制 OpenWrt 固件 (1) 透明代理
 
 实际使用时，用户不需要设置代理或者 VPN，就能够达到翻墙等目的。
 
+<!-- more -->
+
 ### OpenWrt ImageBuilder
 
 这次我们的定制选择使用 OpenWrt ImageBuilder 进行。因为 Build 的是 Chaos Calmer 正式版映像，没有必要从源代码开始编译。如果是 Trunk 的话，由于内核版本迭代非常快，建议从源代码开始编译。
