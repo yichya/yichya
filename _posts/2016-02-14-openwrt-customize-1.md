@@ -3,7 +3,7 @@ layout: post
 title: 定制 OpenWrt 固件 (1) 透明代理
 ---
 
-一年一度虐狗节 :)
+一年一度虐狗节 :) 今年谁这么无聊，你给我出来，我保证不打死你 :)
 
 折腾 OpenWrt 也有些日子了，不过还从来没尝试过自己定制 Rom。今天心血来潮，想把手里目前闲置的一个路由拿去做个中继 + 透明代理。
 
@@ -138,3 +138,86 @@ HG655b:
 {% endhighlight %}
 
 我们看到 HG556a ver.C 对应的 profile 是 HG556a_C。那么我们直接试着 make image 一下吧。
+
+{% highlight bash %}
+$ make image PROFILE="HG556a_C"
+{% endhighlight %}
+
+没费多少功夫就结束了，然后我们就可以在 bin 文件夹下面找到这些东西：
+
+{% highlight bash %}
+$ ll bin/brcm63xx/
+总用量 8504
+drwxrwxr-x 2 yichya yichya    4096  2月 14 19:25 ./
+drwxrwxr-x 3 yichya yichya    4096  2月 13 15:17 ../
+-rw-rw-r-- 1 yichya yichya     292  2月 14 16:17 md5sums
+-rw-rw-r-- 1 yichya yichya 4980740  2月 13 23:04 openwrt-15.05-brcm63xx-smp-HG556a_C-squashfs-cfe.bin
+-rw-rw-r-- 1 yichya yichya 3801088  2月 14 16:17 openwrt-15.05-brcm63xx-smp-root.squashfs
+-rw-rw-r-- 1 yichya yichya     452  2月 14 16:17 sha256sums
+{% endhighlight %}
+
+其中 squashfs 文件是根文件系统的映像，而 bin 文件就是可以直接刷到路由器里面的固件了。
+
+当然，这个固件的功能非常简单，简单到连 Web 界面都没有。想要设置只能通过 ssh 连接到路由，通过手动修改 /etc/config 下的配置文件完成对路由器的设置。
+
+### Get Started
+
+上一步中我们定制的固件功能缺乏，以至于很难满足普通用户的正常使用需求。因此，我们需要增加固件中包含的软件包数量。
+
+我们在 make info 的时候可以看到最上面的 Default Packages 和下面每一个 target 对应的 profile 中写明的 Packages。从配置文件中看，HG556a_C 中只包含了最基础的包、Ralink 无线网卡驱动、USB 支持和一个 LED 驱动，并不包括 Web 界面。
+
+在我们这次的定制中，我们希望加上图形界面，然后再添加一些例如 U 盘支持、SFTP、动态 DNS 等的功能。于是我们选定所有需要的包：
+
+* wget 
+* luci 
+* block-mount 
+* openssh-sftp-server
+* kmod-fs-vfat
+* kmod-fs-ext4 
+* luci-app-ddns
+
+然后，修改配置文件。配置文件的位置在 /target/linux/brcm63xx/profiles 目录下。在里面我们可以找到一个 huawei.mk 文件，跟我路由器相关的配置应该就在里面了。
+
+打开 huawei.mk，果然找到了 HG556a_C 的配置：
+
+{% highlight makefile %}
+define Profile/HG556a_C
+  NAME:=Huawei EchoLife HG556a (version C - Ralink)
+  PACKAGES:=kmod-rt2800-pci wpad-mini \
+	kmod-usb2 kmod-usb-ohci kmod-ledtrig-usbdev
+endef
+define Profile/HG556a_C/Description
+  Package set optimized for Huawei HG556a version C (Ralink).
+endef
+$(eval $(call Profile,HG556a_C))
+{% endhighlight %}
+
+只要在中间的 PACKAGES 节中增加我们需要的包就可以了。在这里我们无需人工处理依赖，Imagebuilder 会自动帮我们完成依赖相关的工作。
+
+修改成下面这样：
+
+{% highlight makefile %}
+define Profile/HG556a_C
+  NAME:=Huawei EchoLife HG556a (version C - Ralink)
+#  PACKAGES:=kmod-rt2800-pci wpad-mini \
+#	kmod-usb2 kmod-usb-ohci kmod-ledtrig-usbdev
+  PACKAGES:= kmod-rt2800-pci wpad-mini kmod-usb2 kmod-usb-ohci kmod-ledtrig-usbdev wget luci block-mount openssh-sftp-server kmod-fs-vfat kmod-fs-ext4 luci-app-ddns
+endef
+define Profile/HG556a_C/Description
+  Package set optimized for Huawei HG556a version C (Ralink).
+endef
+$(eval $(call Profile,HG556a_C))
+{% endhighlight %}
+
+保存，然后回到主目录，生成映像：
+
+{% highlight bash %}
+$ make image PROFILE="HG556a_C"
+{% endhighlight %}
+
+很快就得到了一个我们定制好的映像。
+
+
+
+
+
