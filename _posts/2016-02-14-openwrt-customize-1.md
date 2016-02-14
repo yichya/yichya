@@ -253,9 +253,25 @@ Downloading http://openwrt-dist.sourceforge.net/releases/brcm63xx/packages/Packa
 make[1]: *** [_call_image] Interrupt
 Makefile:178: recipe for target 'image' failed
 make: *** [image] 中断
-
 {% endhighlight %}
 
+在这里为了解决在终端下使用代理的问题，我们需要使用一个叫做 proxychains 的工具，它可以支持 SOCKS5 全局代理。
+
+安装 proxychains：
+
+{% highlight bash %}
+sudo apt-get install proxychains
+{% endhighlight %}
+
+修改 proxychains 的配置文件 /etc/proxychains.conf
+
+
+
+然后在 make image 时使用这样的命令：
+
+{% highlight bash %}
+$ proxychains make image PROFILE="HG556a_C"
+{% endhighlight %}
 
 ## Configure Transparent Proxy
 
