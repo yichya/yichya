@@ -5,7 +5,7 @@ title: Linux 下的屏幕颜色校正
 
 Asus 的渣笔记本渣屏幕，简直让人心累……虽然 Asus 自带一个叫 Splendid Utility 的工具，可以对屏幕颜色进行一些优化，但是……优化过之后严重损失细节……而且，默认状态下，比起联想笔记本的屏幕，色偏严重，整个屏幕泛着幽幽的蓝光。另外，读文本时，文字的锐利度也不够。
 
-### Flux & RedShift
+## Flux & RedShift
 
 Stanso 推荐我使用这两个工具。RedShift 可以看做是 Flux 的开源版。这个工具通过调整屏幕的色温来改善人眼的观感。
 
@@ -25,7 +25,7 @@ Stanso 推荐我使用这两个工具。RedShift 可以看做是 Flux 的开源�
 
 <!-- more -->
 
-### ColorSync
+## ColorSync
 
 装了黑苹果，瞎玩的时候发现了苹果的显示器颜色校正工具。其实 Windows 也自带一个，但是那个工具基本上等于没有。但是我利用苹果的工具很顺利的将屏幕的颜色调整到了一个颇为顺眼的状态。
 
@@ -33,7 +33,7 @@ Stanso 推荐我使用这两个工具。RedShift 可以看做是 Flux 的开源�
 
 将这一配置文件应用到 Linux 却颇费了些周折。xcalib 工具可以满足我们的需求，但是它会与 nvidia 的闭源驱动产生冲突，因此只能在使用 Intel 集成显卡的时候使用 xcalib 工具。同样，RedShift 工具与 nvidia 闭源驱动的兼容性也相当差劲。*还好我平时几乎不开独立显卡。*
 
-### How about using both tools at the same time?
+## How about using both tools at the same time?
 
 校正屏幕颜色后，似乎 Flux 也就没有什么用武之地了。不过，Flux 的核心功能在于根据经度计算日出日落时间，然后按照某一算法计算出当前屏幕最适合的色温。这个功能似乎还是挺有用的，在 iOS 的最新版本中也添加了这一功能，苹果还顺便把 Flux 下架了。据说因为这个，苹果还被 Flux 的开发商告上了法庭。
 
@@ -41,7 +41,7 @@ Stanso 推荐我使用这两个工具。RedShift 可以看做是 Flux 的开源�
 
 那么，我们如何解决这一问题呢？这一问题的原因又究竟是什么呢？
 
-### Taking a closer look into xcalib
+## Taking a closer look into xcalib
 
 要解决上一节提到的问题，我们就应该先了解 RedShift 和 xcalib 究竟都做了些什么。两个软件都是开源的，可以很容易的找到源代码。
 
@@ -186,7 +186,7 @@ XF86VidModeSetGammaRamp(dpy, screen, ramp_size, r_ramp, g_ramp, b_ramp);
 
 这样 xcalib 在 Linux 平台上的整个流程我们就基本上分析完成了。xcalib 还提供了一些命令行参数用于指定每一个通道的 Gamma 修正值、亮度等，全都是简单的数学运算，我们就不再分析了。
 
-### ... and RedShift
+## ... and RedShift
 
 分析完了 xcalib，我们该来看看 RedShift 是怎样完成设置屏幕色温的了。
 
@@ -341,7 +341,7 @@ void colorramp_fill(uint16_t *gamma_r, uint16_t *gamma_g, uint16_t *gamma_b, int
 
 RedShift 的核心部分到这里也就分析完成了。它还有一些根据经度确定日出日落时间的功能，我们就不再分析了。
 
-### Do it myself
+## Do it myself
 
 回到上面提到的问题：为什么 RedShift 不能与 xcalib 协同工作呢？
 
