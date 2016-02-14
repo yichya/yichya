@@ -7,8 +7,6 @@ title: 定制 OpenWrt 固件 (1) 透明代理
 
 折腾 OpenWrt 也有些日子了，不过还从来没尝试过自己定制 Rom。今天心血来潮，想把手里目前闲置的一个路由拿去做个中继 + 透明代理。
 
-顺便预告一下：下一次介绍集成 ADBYBY 和 KMS 服务器，当然下一次我会换新买的 7620n SoC 的路由器来演示；之后我会以集成石像鬼 QoS 为例介绍一下 OpenWrt 的 BuildRoot。
-
 ## Repeater
 
 现在市面上能买到的很多路由器都支持中继模式，我手里这台 HG556a ver.C 在更新到 OpenWrt Chaos Calmer 正式版之后居然也支持了。实测中继模式运行完美，美滴很。
@@ -237,7 +235,7 @@ $ make image PROFILE="HG556a_C"
 
 不过，麻烦的事情在于，第三方的源是直接被 GFW 拉黑的 sourceforge。
 
-再 repositories.conf 中添加以下两个源：
+在 repositories.conf 中添加以下两个源：
 
 {% highlight bash %}
 # ShadowSocks
@@ -342,3 +340,9 @@ ChinaDNS 的配置有以下几种可选方案：
 国外的网站自动通过代理访问，实现自动翻墙。
 
 ![speedtest-outside](http://blog.yichyaqc.cn/assets/images/openwrt-customize-1/speedtest_outside.png)
+
+同时可以看到，整个过程中我并没有打开右上角的 SwitchyOmega 代理切换。
+
+在使用中还会发现一点小问题：比如说访问京东的时候，网站就会认为我的请求来自国外，然后在页面顶端显示一个导航栏建议我到京东的国外站点购物，真是够了 233333
+
+顺便预告一下：下一次介绍集成 ADBYBY 和 KMS 服务器，当然下一次我会换新买的 7620n SoC 的路由器来演示；之后我会以集成石像鬼 QoS 为例介绍一下 OpenWrt 的 BuildRoot。
