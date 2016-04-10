@@ -6,18 +6,18 @@ image:
   credit: dargadgetz
   creditlink: http://www.dargadgetz.com/ios-7-abstract-wallpaper-pack-for-iphone-5-and-ipod-touch-retina/
 comments: false
-modified: 2016-02-11
+modified: 2016-04-11
 ---
 
 # About Myself
 
 ## Overview
 
-yichya QC
+**yichya QC** 
 
 Xidian University, Software Engineering
 
-一个无聊的人。
+一个无聊的人（QC）。
 
 重度社交恐惧症患者，努力尝试自救中。
 
@@ -32,7 +32,7 @@ Xidian University, Software Engineering
 * Python
 * Node.js
 
-开发框架：
+Web 开发框架：
 
 * Django
 * Tornado
@@ -42,6 +42,11 @@ Xidian University, Software Engineering
 
 * MongoDB
 * MySQL & MariaDB
+* Redis
+
+使用过 SQLAlchemy、Python-MongoDB 等 ORM。
+
+使用过 Ping++ 支付聚合 SDK，了解支付相关开发过程。
 
 ## Secondary Skills
 
@@ -51,15 +56,19 @@ Windows & UWP 平台入门开发者，主要使用 C# 语言。
 
 熟练掌握 Windows 系统的定制、高级部署。熟练掌握适合各种情况的 Windows PE 定制与部署。
 
-## External Skills
-
-对系统底层有一定兴趣，然而技能树尚未扩展到相关领域。
-
-喜欢折腾 OpenWrt 路由器，魔改过几台路由。
+花式路由器玩家。喜欢折腾 OpenWrt 路由器，魔改过几台路由。
 
 焊接技能，DIY 过 U 盘。为路由器更换过 Ram 芯片。希望有机会玩一玩热风枪。
 
-有树莓派一只，试着开发过一个在 Pi 上运行的网络收音机客户端。目前临时充当 OpenWrt 无线路由器。
+树莓派 2B、3B 用户。对嵌入式开发一直很感兴趣。
+
+## Trying to learn
+
+对系统底层有一定兴趣，然而技能树尚未扩展到相关领域。
+
+不怎么会写 Web 前端。
+
+可能会入坑算命（机器学习），为了以后多一个活命的本事。
 
 ## Gaming
 
