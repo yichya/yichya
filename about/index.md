@@ -5,7 +5,6 @@ image:
   feature: abstract-5.jpg
   credit: dargadgetz
   creditlink: http://www.dargadgetz.com/ios-7-abstract-wallpaper-pack-for-iphone-5-and-ipod-touch-retina/
-comments: false
 modified: 2016-04-11
 ---
 
@@ -87,3 +86,7 @@ Steam 上还有 Just Cause 3 等一些游戏，求一波好友。
 > A good soldier knows there's only one thing he can rely on when the chips are down: Not his cutting-edge intel, not his state of the art equipment, and not his top of the line weapon. Just himself: It took me a long time to remember that. 
 >
 > --- Laurence "Prophet" Barnes
+
+## Board
+
+下面可以留言。我会尽量回复。
