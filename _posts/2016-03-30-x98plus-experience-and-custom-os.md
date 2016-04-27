@@ -146,20 +146,24 @@ Windows 下尚可的触摸屏在 Android 下就变得不算很灵敏，滑动偶
 
 打开磁盘管理，瞬间一脸蒙逼。面前摆着 15 个分区，你们感受一下……
 
-按顺序排，分区是这个样子的：
+按 GPT 名称顺序排，分区是这个样子的：
 
 * **android_bootloader** 应该是个 EFI 分区，100MB。
 * **android_bootloader2** 探测不出文件系统……什么鬼。100MB。
-* **android_boot** 我猜这个是内核吧。几十 MB。
-* **android_recovery** Recovery 吧，几十 MB。
-* **android_system**
-* **android_data**
-* **android_cache**
-* **android_persistent**
-* **android_config**
-* **Basic Data Partition**
-* **Microsoft Reserved Partition**
-* **Basic Data Partition**
-* **Basic Data Partition**
+* **android_boot** 我猜这个是内核吧。30MB，未知文件系统。
+* **android_recovery** Recovery 吧，30MB，同样未知文件系统。
+* **android_misc** 不知道是什么，1MB，还是未知文件系统。
+* **android_metadata** 也不知道是啥，16MB，还是未知文件系统。
+* **android_system** System 分区，2.5GB 左右。文件系统居然是 Ext4。
+* **android_data** Data 分区，20GB 似乎。也是 Ext4。
+* **android_cache** Cache 分区，Ext4。2GB，好大。
+* **android_persistent** 1MB。。。似乎跟 Android 的设备保护功能有关。
+* **android_config** 16MB，Ext4，存了点配置文件吧貌似，没进去看过。
+* **Basic Data Partition** 看见第二个 EFI 分区的时候我一脸蒙逼。。。100MB。
+* **Microsoft Reserved Partition** 就是 MSR，16MB。
+* **Basic Data Partition** Windows 下的 C 盘，32.6GB。
+* **Basic Data Partition** 分离的 RE 环境，几百 MB。
 
+一大堆未知文件系统的分区和两个（没准是三个）EFI 分区瞬间把我吓尿了。感觉整个人都不好了你造吗……
 
+硬着头皮上吧。找了个 XUbuntu 的启动盘准备开 GParted，然而过程又是一大堆坑。。。
