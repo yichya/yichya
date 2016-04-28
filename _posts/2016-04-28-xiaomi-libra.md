@@ -1,4 +1,4 @@
-----
+---
 title: 新爪机 Get：小米 4C
 layout: post
 ----
