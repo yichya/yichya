@@ -11,9 +11,9 @@ url: http://blog.yichyaqc.cn
 menu:
   - title: 'Home'
     url: '/'
-  - title: 'Categories'
-    url: '/categories'
-    type: 'categories'
+#  - title: 'Categories'
+#    url: '/categories'
+#    type: 'categories'
   - title: 'About'
     url: '/about'
 #  - title: 'Tags'
