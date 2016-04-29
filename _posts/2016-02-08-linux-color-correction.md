@@ -13,11 +13,11 @@ Stanso 推荐我使用这两个工具。RedShift 可以看做是 Flux 的开源�
 > 
 > --- From Wikipedia
 
-![flux](http://blog.yichyaqc.cn/assets/images/linux-color-correction/flux-accion.png)
+![flux](/assets/images/linux-color-correction/flux-accion.png)
 
 在这里有一张图，可以将色温与辐射颜色简单对应。
 
-![blackbody](http://blog.yichyaqc.cn/assets/images/linux-color-correction/blackbody.png)
+![blackbody](/assets/images/linux-color-correction/blackbody.png)
 
 （来自 <http://www.techmind.org/colour/coltemp.html>）
 
@@ -154,7 +154,7 @@ xcalib_state.gamma_cor 如果没有在命令行中特殊指定的话则取默认
 
 用电子表格软件根据这个公式计算得到对应的 768 个点，绘制一下，图像大概是这个样子的：
 
-![curve-1](http://blog.yichyaqc.cn/assets/images/linux-color-correction/curve-1.png)
+![curve-1](/assets/images/linux-color-correction/curve-1.png)
 
 其中三条曲线的 Min 均为 0，Max 均为 1，Gamma 从上往下依次为 0.5，1，1.5。
 
@@ -166,7 +166,7 @@ xcalib_state.gamma_cor 如果没有在命令行中特殊指定的话则取默认
 
 我手中的这个 ICC 文件中的 VCGT 节就是一个 VideoCardGammaTable。我将其中的数据读出之后，用电子表格软件绘制如图：
 
-![curve-2](http://blog.yichyaqc.cn/assets/images/linux-color-correction/curve-2.png)
+![curve-2](/assets/images/linux-color-correction/curve-2.png)
 
 *为什么 LibreOffice Calc 不能改线的颜色……*
 
@@ -174,7 +174,7 @@ xcalib_state.gamma_cor 如果没有在命令行中特殊指定的话则取默认
 
 直接使用 dispcalGUI 中自带的 Curve Viewer 打开对应的 ICC 文件，也可以看到相同的一条曲线，这说明我们的分析是正确的。
 
-![curve-3](http://blog.yichyaqc.cn/assets/images/linux-color-correction/curve-3.png)
+![curve-3](/assets/images/linux-color-correction/curve-3.png)
 
 苹果的校正程序整体上调高了我的屏幕的 Gamma 值，强化了 R 通道，弱化了 G 和 B 通道，使屏幕不再明显的泛着蓝光。
 
@@ -262,12 +262,12 @@ error = xcb_request_check(state->conn, gamma_set_cookie);
    This table was provided by Ingo Thies, 2013. See
    the file README-colorramp for more information. */
 static const float blackbody_color[] = {
-	1.00000000,  0.18172716,  0.00000000, /* 1000K */
-	1.00000000,  0.25503671,  0.00000000, /* 1100K */
-	1.00000000,  0.30942099,  0.00000000, /* 1200K */
-	1.00000000,  0.35357379,  0.00000000, /* ...   */
-	1.00000000,  0.39091524,  0.00000000,
-	1.00000000,  0.42322816,  0.00000000,
+    1.00000000,  0.18172716,  0.00000000, /* 1000K */
+    1.00000000,  0.25503671,  0.00000000, /* 1100K */
+    1.00000000,  0.30942099,  0.00000000, /* 1200K */
+    1.00000000,  0.35357379,  0.00000000, /* ...   */
+    1.00000000,  0.39091524,  0.00000000,
+    1.00000000,  0.42322816,  0.00000000,
 
 // ... 
 {% endhighlight %}
@@ -283,26 +283,26 @@ static const float blackbody_color[] = {
 {% highlight c %}
 
 static void interpolate_color(float a, const float *c1, const float *c2, float *c) {
-	c[0] = (1.0 - a) * c1[0] + a * c2[0];
-	c[1] = (1.0 - a) * c1[1] + a * c2[1];
-	c[2] = (1.0 - a) * c1[2] + a * c2[2];
+    c[0] = (1.0 - a) * c1[0] + a * c2[0];
+    c[1] = (1.0 - a) * c1[1] + a * c2[1];
+    c[2] = (1.0 - a) * c1[2] + a * c2[2];
 }
 
 /* Helper macro used in the fill functions */
 #define F(Y, C)  pow((Y) * setting->brightness * white_point[C], 1.0 / setting->gamma[C])
 
 void colorramp_fill(uint16_t *gamma_r, uint16_t *gamma_g, uint16_t *gamma_b, int size, const color_setting_t *setting) {
-	/* Approximate white point */
-	float white_point[3];
-	float alpha = (setting->temperature % 100) / 100.0;
-	int temp_index = ((setting->temperature - 1000) / 100) * 3;
-	interpolate_color(alpha, &blackbody_color[temp_index], &blackbody_color[temp_index + 3], white_point);
+    /* Approximate white point */
+    float white_point[3];
+    float alpha = (setting->temperature % 100) / 100.0;
+    int temp_index = ((setting->temperature - 1000) / 100) * 3;
+    interpolate_color(alpha, &blackbody_color[temp_index], &blackbody_color[temp_index + 3], white_point);
 
-	for (int i = 0; i < size; i++) {
-		gamma_r[i] = F((double)gamma_r[i] / (UINT16_MAX + 1), 0) * (UINT16_MAX + 1);
-		gamma_g[i] = F((double)gamma_g[i] / (UINT16_MAX + 1), 1) * (UINT16_MAX + 1);
-		gamma_b[i] = F((double)gamma_b[i] / (UINT16_MAX + 1), 2) * (UINT16_MAX + 1);
-	}
+    for (int i = 0; i < size; i++) {
+        gamma_r[i] = F((double)gamma_r[i] / (UINT16_MAX + 1), 0) * (UINT16_MAX + 1);
+        gamma_g[i] = F((double)gamma_g[i] / (UINT16_MAX + 1), 1) * (UINT16_MAX + 1);
+        gamma_b[i] = F((double)gamma_b[i] / (UINT16_MAX + 1), 2) * (UINT16_MAX + 1);
+    }
 }
 
 {% endhighlight %}
@@ -318,9 +318,9 @@ void colorramp_fill(uint16_t *gamma_r, uint16_t *gamma_g, uint16_t *gamma_b, int
 {% highlight bash %}
 ...
 
--b DAY:NIGHT	Screen brightness to apply (between 0.1 and 1.0)
--c FILE	        Load settings from specified configuration file
--g R:G:B	    Additional gamma correction to apply
+-b DAY:NIGHT   Screen brightness to apply (between 0.1 and 1.0)
+-c FILE        Load settings from specified configuration file
+-g R:G:B       Additional gamma correction to apply
 
 ...
 {% endhighlight %}
@@ -333,7 +333,7 @@ void colorramp_fill(uint16_t *gamma_r, uint16_t *gamma_g, uint16_t *gamma_b, int
 
 对于我之前读出的那条曲线，可以认为它是 6500K 色温下的曲线。我们将屏幕色温设置为 5000K，重新读一条曲线：
 
-![curve-4](http://blog.yichyaqc.cn/assets/images/linux-color-correction/curve-4.png)
+![curve-4](/assets/images/linux-color-correction/curve-4.png)
 
 （对应 5000K 色温的 Gamma 值：`1.00000000,  0.90198230,  0.81465502, /* 5000K */`）
 
@@ -416,30 +416,106 @@ xcb-randr 给我们提供了十分简单易懂的 API 供我们完成设置 ramp
 #include "randr.h"
 
 xcb_connection_t* randr_init_display() {
-        return xcb_connect(NULL, 0);
+    return xcb_connect(NULL, 0);
 }
 
 xcb_generic_error_t* randr_set_new_ramp(xcb_connection_t* conn, xcb_randr_crtc_t crtc, Ramp& _ramp) {
-        xcb_void_cookie_t gamma_set_cookie = xcb_randr_set_crtc_gamma_checked(conn, crtc, _ramp.numEntries, _ramp.rRamp, _ramp.gRamp, _ramp.bRamp);
-        return xcb_request_check(conn, gamma_set_cookie);
+    xcb_void_cookie_t gamma_set_cookie = xcb_randr_set_crtc_gamma_checked(conn, crtc, _ramp.numEntries, _ramp.rRamp, _ramp.gRamp, _ramp.bRamp);
+    return xcb_request_check(conn, gamma_set_cookie);
 }
 {% endhighlight %}
 
 实际调用的过程也比较简单。
 
 {% highlight cpp %}
-if (modeType == MODE_VIDMODE) {
-        cout << "Using method vidmode" << endl;
-        char* display_name = NULL;
-        int screen = -1;
-        Display* display = vidmode_init_display(display_name, screen);
-        vidmode_set_new_ramp(display, screen, new_ramp);
-}
-else {
-        cout << "Using method randr" << endl;
-        xcb_connection_t* conn = randr_init_display();
-        randr_set_new_ramp(conn, 63, new_ramp);
-}
+cout << "Using method randr" << endl;
+xcb_connection_t* conn = randr_init_display();
+randr_set_new_ramp(conn, 63, new_ramp);
 {% endhighlight %}
 
-其中 63 是 CRTC 的编号，我们可以通过修改 redshift 的代码来获得这个数据，也可以自己调用 API 来获取。
+其中 63 是 CRTC 的编号，我们可以通过修改 redshift 的代码来获得这个数据：
+
+（redshift/src/gamma-randr.c, in randr_set_temperature_for_crtc()）
+
+{% highlight cpp %}
+    colorramp_fill(gamma_r, gamma_g, gamma_b, ramp_size, setting);
+
+    /* Set new gamma ramps */
+    fprintf(stdout, "crtc %d, ramp_size %d \n", crtc, ramp_size); // add this line to get crtc number.
+    xcb_void_cookie_t gamma_set_cookie = xcb_randr_set_crtc_gamma_checked(state->conn, crtc, ramp_size, gamma_r, gamma_g, gamma_b);
+    error = xcb_request_check(state->conn, gamma_set_cookie);
+{% endhighlight %}
+
+也可以通过调用 xcb-randr 提供的 APIs 来获取，我们直接看 redshift 的源代码：
+
+（redshift/src/gamma-randr.c）
+
+{% highlight c %}
+int randr_start(randr_state_t *state)
+{
+    xcb_generic_error_t *error;
+
+    int screen_num = state->screen_num;
+    if (screen_num < 0) screen_num = state->preferred_screen;
+
+    /* Get screen */
+    const xcb_setup_t *setup = xcb_get_setup(state->conn);
+    xcb_screen_iterator_t iter = xcb_setup_roots_iterator(setup);
+    state->screen = NULL;
+
+    for (int i = 0; iter.rem > 0; i++) {
+        if (i == screen_num) {
+            state->screen = iter.data;
+            break;
+        }
+        xcb_screen_next(&iter);
+    }
+
+    if (state->screen == NULL) {
+        fprintf(stderr, _("Screen %i could not be found.\n"), screen_num);
+        return -1;
+    }
+
+    /* Get list of CRTCs for the screen */
+    xcb_randr_get_screen_resources_current_cookie_t res_cookie = xcb_randr_get_screen_resources_current(state->conn, state->screen->root);
+    xcb_randr_get_screen_resources_current_reply_t *res_reply = xcb_randr_get_screen_resources_current_reply(state->conn, res_cookie, &error);
+
+    if (error) {
+        fprintf(stderr, _("`%s' returned error %d\n"), "RANDR Get Screen Resources Current", error->error_code);
+        return -1;
+    }
+
+    state->crtc_count = res_reply->num_crtcs;
+    state->crtcs = calloc(state->crtc_count, sizeof(randr_crtc_state_t));
+    if (state->crtcs == NULL) {
+        perror("malloc");
+        state->crtc_count = 0;
+        return -1;
+    }
+
+    xcb_randr_crtc_t *crtcs = xcb_randr_get_screen_resources_current_crtcs(res_reply);
+
+    /* Save CRTC identifier in state */
+    for (int i = 0; i < state->crtc_count; i++) {
+        state->crtcs[i].crtc = crtcs[i];
+    }
+
+    free(res_reply);
+    
+    // ...
+{% endhighlight %}
+
+这里通过 `xcb_get_setup()` 得到一个显示设备树，然后利用 `xcb_randr_get_screen_resources_current_reply()` 遍历得到每一个 screen的信息，再利用 `xcb_randr_get_screen_resources_current_crtcs()` 得到每一个 screen 的 crtc 信息。
+
+当然了这些步骤其实跳过也无所谓……虽然并不建议直接跳过。
+
+由于我们添加了一种模式，我们需要启动时能够选择使用的模式，简单的写一个 usage 信息。
+
+{% highlight bash %}
+Usage: iccLoader [-r / -v] /path/to/icc/file
+Use -r for randr, -v for vidmode. Default is vidmode
+{% endhighlight %}
+
+那么现在这个 Project 应该算是比较愉悦的完成了 :)
+
+另外，由于 GitCafe 被收购，代码迁移到 Coding.net。Clone at https://git.coding.net/yichya/IccReader.git
