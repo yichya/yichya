@@ -6,7 +6,7 @@ words_per_minute: 2000
 logo:             images/logo.png
 # Your site's domain goes here (eg: //mmistakes.github.io, http://mademistakes.com, etc)
 # When testing locally leave blank or use http://localhost:4000
-url: http://blog.yichyaqc.cn
+url: http://115.159.145.37
 
 menu:
   - title: 'Home'
