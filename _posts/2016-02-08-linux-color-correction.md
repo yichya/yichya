@@ -375,4 +375,53 @@ else {
 
 程序比较简单，这里就不再赘述了。我用 C++ 重新实现了部分流程，在我的 Ubuntu 15.10 上测试通过。
 
-代码可以在我的 GitCafe（<https://gitcafe.com/yichya/IccReader>）上找到。
+## NVIDIA Graphics Card Support
+
+Ubuntu 更新到了 16.04，NVIDIA 的闭源显卡驱动也更新了。偶然的尝试之后发现这个显卡驱动现在支持了 X11 协议中的 xcb-randr 扩展，利用 `redshift -m randr -O 5000` 可以成功调整色温。
+
+在我们前面的代码阅读过程中，我们知道 randr 和 vidmode 两种模式是通过不同的 API 将相同的 Ramp 数据传递给显卡的 LUT。于是我们只需要简单的处理一下，就可以顺利调用 xcb-randr 提供的扩展完成针对 NVIDIA 显示核心的色温设置。
+
+首先，编译需要我们手动安装 libxcb-randr。
+
+{% highlight bash %}
+sudo apt-get install libxcb-randr
+{% endhighlight %}
+
+修改 cmakelists.txt，增加头文件和动态链接库。
+
+{% highlight cmake %}
+cmake_minimum_required(VERSION 3.3)
+project(iccLoader)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+
+set(SOURCE_FILES src/main.cpp src/icc.cpp src/colorramp.cpp src/vidmode.cpp include/icc.h include/ramp.h include/colorramp.h include/vidmode.h src/randr.cpp include/randr.h)
+include_directories(include)
+link_directories(/usr/X11R6/lib /usr/lib/x86_64-linux-gnu/)
+link_libraries(X11 Xxf86vm Xext xcb xcb-randr)
+add_executable(iccLoader ${SOURCE_FILES})
+{% endhighlight %}
+
+xcb-randr 给我们提供了十分简单易懂的 API 供我们完成设置 ramp 的任务：
+
+* **xcb_connect()** 打开一个到 X11 服务器的连接。
+* **xcb_randr_set_crtc_gamma_checked()** 设置 Gamma，并返回一个 xcb_void_cookie_t 类型的数据供我们检查操作是否成功完成。
+* **xcb_request_check()** 检查操作是否顺利完成。
+
+调用很简单，直接贴代码。
+
+{% highlight cpp %}
+#include <xcb/xcb.h>
+#include <xcb/randr.h>
+
+#include "randr.h"
+
+xcb_connection_t* randr_init_display() {
+        return xcb_connect(NULL, 0);
+}
+
+xcb_generic_error_t* randr_set_new_ramp(xcb_connection_t* conn, xcb_randr_crtc_t crtc, Ramp& _ramp) {
+        xcb_void_cookie_t gamma_set_cookie = xcb_randr_set_crtc_gamma_checked(conn, crtc, _ramp.numEntries, _ramp.rRamp, _ramp.gRamp, _ramp.bRamp);
+        return xcb_request_check(conn, gamma_set_cookie);
+}
+
+{% endhighlight %}
