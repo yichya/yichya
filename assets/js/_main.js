@@ -62,32 +62,16 @@ $(document).ready(function(e) {
 });
 
 //mobile menu
-/*
 $(document).ready(function(){
   $("#menu").attr('style', '');
   $("#menu").mmenu({
     "extensions": [
       "border-full",
-      "effect-zoom-menu",
-      "effect-zoom-panels",
-      "pageshadow",
       "theme-dark"
     ],
     "counters": true,
-    "navbars": [
-      {
-        "position": "bottom",
-        "content": [
-          "<a class='fa fa-search' href='/search'></a>",
-          "<a class='fa fa-envelope' href='#/'></a>",
-          "<a class='fa fa-twitter' href='#/'></a>",
-          "<a class='fa fa-facebook' href='#/'></a>"
-        ]
-      }
-    ]
   });
 });
-*/
 
 //sharing
 // $(document).ready(function(){
