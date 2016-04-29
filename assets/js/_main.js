@@ -62,6 +62,7 @@ $(document).ready(function(e) {
 });
 
 //mobile menu
+/*
 $(document).ready(function(){
   $("#menu").attr('style', '');
   $("#menu").mmenu({
@@ -86,6 +87,7 @@ $(document).ready(function(){
     ]
   });
 });
+*/
 
 //sharing
 // $(document).ready(function(){
