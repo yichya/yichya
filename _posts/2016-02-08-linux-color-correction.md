@@ -505,7 +505,7 @@ int randr_start(randr_state_t *state)
     // ...
 {% endhighlight %}
 
-这里通过 `xcb_get_setup()` 得到一个显示设备树，然后利用 `xcb_randr_get_screen_resources_current_reply()` 遍历得到每一个 screen的信息，再利用 `xcb_randr_get_screen_resources_current_crtcs()` 得到每一个 screen 的 crtc 信息。
+这里通过 `xcb_get_setup()` 得到一个显示设备树，然后利用 `xcb_randr_get_screen_resources_current_reply()` 遍历得到每一个 screen 的信息，再利用 `xcb_randr_get_screen_resources_current_crtcs()` 得到每一个 screen 的 crtc 信息。
 
 当然了这些步骤其实跳过也无所谓……虽然并不建议直接跳过。
 
