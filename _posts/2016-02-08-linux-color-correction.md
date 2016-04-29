@@ -423,5 +423,23 @@ xcb_generic_error_t* randr_set_new_ramp(xcb_connection_t* conn, xcb_randr_crtc_t
         xcb_void_cookie_t gamma_set_cookie = xcb_randr_set_crtc_gamma_checked(conn, crtc, _ramp.numEntries, _ramp.rRamp, _ramp.gRamp, _ramp.bRamp);
         return xcb_request_check(conn, gamma_set_cookie);
 }
-
 {% endhighlight %}
+
+实际调用的过程也比较简单。
+
+{% highlight cpp %}
+if (modeType == MODE_VIDMODE) {
+        cout << "Using method vidmode" << endl;
+        char* display_name = NULL;
+        int screen = -1;
+        Display* display = vidmode_init_display(display_name, screen);
+        vidmode_set_new_ramp(display, screen, new_ramp);
+}
+else {
+        cout << "Using method randr" << endl;
+        xcb_connection_t* conn = randr_init_display();
+        randr_set_new_ramp(conn, 63, new_ramp);
+}
+{% endhighlight %}
+
+其中 63 是 CRTC 的编号，我们可以通过修改 redshift 的代码来获得这个数据，也可以自己调用 API 来获取。
