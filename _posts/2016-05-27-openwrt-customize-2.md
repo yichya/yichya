@@ -15,9 +15,11 @@ title: 定制 OpenWrt 固件 (2) BuildRoot
 
 到手之后极 1s 没怎么折腾就拿去用了（话说居然还有 900 多天才过保，不亏）。既然没过保就不瞎折腾了，插到网内让它安静的提供一下 OpenVPN 服务就行。
 
-这台 WR703N 跟卖家说的一样棘手，插上电源之后，看指示灯闪烁的状态，似乎正常启动到了 OpenWrt。然而捅了半天菊花试图恢复出厂设置，无效。这就很尴尬了。进 U-Boot 也分配不到 IP。
+这台 WR703N 真的好小，比银行卡的一半稍大一点。直接挂在钥匙上都不是很违和。
 
-【图 0，WR703N】
+![](../assets/images/openwrt-customize-2/wr703n.jpg)
+
+稍微玩了一小会儿。跟卖家说的一样棘手，插上电源之后，看指示灯闪烁的状态，似乎正常启动到了 OpenWrt。然而捅了半天菊花试图恢复出厂设置，无效。这就很尴尬了。进 U-Boot 也分配不到 IP。
 
 上网查过，发现 TP 原装的 U-Boot 并没有自动设置 IP 之类。意思是说，固件挂了，如果没有办法接 TTL 的话，这东西就是一板砖。尼玛。
 
@@ -31,9 +33,9 @@ title: 定制 OpenWrt 固件 (2) BuildRoot
 
 然后就是刷掉固件解锁 U-Boot，刷 Breed，备份 ART，为后面作死做好准备。 
 
-* 解锁了 U-Boot 分区的固件可以在【这里】下载。
-* Breed 可以在【这里】下载。如何刷入请见贴内教程，其实也就是一个 `mtd -r write /tmp/breed-ar9331.bin u-boot` 而已。
-* 我的 ART 可以在【这里】下载。
+* 解锁了 U-Boot 分区的固件可以在[【这里】](http://pan.baidu.com/s/1dDu0Rgl)下载。
+* Breed 可以在[【这里】](http://www.right.com.cn/forum/thread-161906-1-1.html)下载。如何刷入请见贴内教程，其实也就是一个 `mtd -r write /tmp/breed-ar9331.bin u-boot` 而已。
+* 我的 ART 可以在[【这里】](../assets/files/openwrt-customize-2/art.bin)下载。
 
 Breed 界面是这个样子的，可以看到这台设备并没有进行硬件改动，仍然是出厂时的 32MB RAM + 4MB Flash 搭配。
 
@@ -41,7 +43,7 @@ Breed 界面是这个样子的，可以看到这台设备并没有进行硬件�
 
 拆 TTL 线的时候就比较悲剧……焊点小也就算了，还特么特别容易掉。虽然我小心小心再小心不过还是手抖毁掉了一个焊盘。不过无所谓了。
 
-搞定之后，我刷的是 lean 定制的自带 ShadowSocksR 和 AdBlock Plus 并优化了 Dnsmasq 的固件，可以在【这里】下载。
+搞定之后，我刷的是 lean 定制的自带 ShadowSocksR 和 AdBlock Plus 并优化了 Dnsmasq 的固件，可以在[【这里】](http://www.right.com.cn/forum/thread-186814-1-3.html)下载。
 
 ## Challenge
 
@@ -65,6 +67,7 @@ lean 的固件用起来还不错，可以十分愉悦的完成透明代理任务
 
 * Linux 或者 Mac OS X。重点是 Case-Sensetive Filesystem……所以 Cygwin 不行。
 * ToolChains。第一次执行 make 时会检查工具链，如下。
+* 靠谱的网络。最好挂好了 VPN 或者配置好了 ShadowSocks 透明代理，或者使用前面提到过的 ProxyChains。
 
 {% highlight bash %}
 Checking 'working-make'... ok.
@@ -160,5 +163,6 @@ make V=99 -j
 
 ![](../assets/images/openwrt-customize-2/first-make.png)
 
-一次完整的编译大概要近 20 分钟，我们可以开始等了。这个过程中 CPU 也会狂烧……最好去睡一会儿。
+一次完整的编译大概要近 20 分钟，我们可以开始等了。这个过程中需要保持网络畅通，同时 CPU 也会狂烧……最好去睡一会儿。
+
 
