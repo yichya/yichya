@@ -66,7 +66,7 @@ lean 的固件用起来还不错，可以十分愉悦的完成透明代理任务
 * Linux 或者 Mac OS X。重点是 Case-Sensetive Filesystem……所以 Cygwin 不行。
 * ToolChains。第一次执行 make 时会检查工具链，如下。
 
-```
+{% highlight bash %}
 Checking 'working-make'... ok.
 Checking 'case-sensitive-fs'... ok.
 Checking 'gcc'... ok.
@@ -99,21 +99,21 @@ Checking 'git'... ok.
 Checking 'file'... ok.
 Checking 'openssl'... ok.
 Checking 'ldconfig-stub'... ok.
-```
+{% endhighlight %}
 
 全都准备好之后，我们就可以开始了。
 
 首先，从 OpenWrt 官方获取源代码。我们这次的定制使用 2016/05/27 的 Trunk 版本。
 
-```
+{% highlight bash %}
 git clone git://git.openwrt.org/openwrt.git trunk
-```
+{% endhighlight %}
 
 如果需要稳定版，可以加上对应的版本号：
 
-```
+{% highlight bash %}
 git clone git://git.openwrt.org/15.05/openwrt.git chaos_calmer
-```
+{% endhighlight %}
 
 需要注意的是目前 Chaos Calmer 分支下的稳定版是 15.05.1。
 
@@ -121,9 +121,9 @@ git clone git://git.openwrt.org/15.05/openwrt.git chaos_calmer
 
 输入命令
 
-```
+{% highlight bash %}
 make menuconfig
-```
+{% endhighlight %}
 
 之后，我们就看到了配置菜单。
 
@@ -131,10 +131,10 @@ make menuconfig
 
 我们发现，这个菜单中包含的项目并不全，甚至连最重要的 LuCI 都没有。在开始前，我们还需要更新 Feeds。
 
-```
+{% highlight bash %}
 ./scripts/feeds update -a
 ./scripts/feeds install -a
-```
+{% endhighlight %}
 
 更新 Feeds 之后再查看菜单，LuCI 等项目就出现了。
 
@@ -152,9 +152,9 @@ make menuconfig
 
 退出，开始编译：
 
-```
+{% highlight bash %}
 make V=99 -j
-```
+{% endhighlight %}
 
 其中 V=99 代表显示所有信息。-j 代表允许并行任务（后面可以加一个数字代表线程数，不加代表不限制）
 
