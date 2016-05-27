@@ -9,6 +9,8 @@ title: 定制 OpenWrt 固件 (2) BuildRoot
 
 所以嘛，我们跳过这一步，直接来搞 BuildRoot。
 
+* lean 称他的固件为【4MB 的奇迹】，我们就来重演一次他的奇迹好了。*
+
 <!-- more -->
 
 ## TL-WR703N Original version
@@ -55,7 +57,12 @@ lean 的固件用起来还不错，可以十分愉悦的完成透明代理任务
 
 由于这个路由器非常非常小，小到挂在钥匙上都不太违和，我计划中的使用方式大概是这样：用移动电源给树莓派供电，树莓派某一个 USB 口连接路由器供电口，路由器的 USB 口连接手机，手机打开 USB 网络共享。这样其他设备连接到路由器提供的网络就可以通过手机上网了。
 
-本来计划使用 ImageBuilder 完成映像定制，不过……
+通过搜索得知：
+
+* WR703N 的 USB 控制器为 EHCI 类型，需要安装模块 kmod-usb2 打开支持。
+* 手机通过 USB 共享网络使用了 RNDIS。OpenWrt 官方通过模块 kmod-usb-net-rndis 提供了全面支持。
+
+看似并不难的样子。本来计划使用 ImageBuilder 完成映像定制，不过……
 
 * Flash 空间只有 4MB，裁剪的粒度可能比软件包还要小，甚至可能细化到内核的某一个功能特性（事实上也确实如此）
 * ShadowSocksR 没有提供上一次搞透明代理那样的第三方软件源（虽然可以配置本地源，所以这其实不算是个什么靠谱的理由）
@@ -67,9 +74,9 @@ lean 的固件用起来还不错，可以十分愉悦的完成透明代理任务
 
 首先，根据官方的 BuildRoot 教程，我们需要准备以下环境。
 
+* 靠谱的网络。最好挂好了 VPN 或者配置好了 ShadowSocks 透明代理，或者使用前面提到过的 ProxyChains。
 * Linux 或者 Mac OS X。重点是 Case-Sensetive Filesystem……所以 Cygwin 不行。
 * ToolChains。第一次执行 make 时会检查工具链，如下。
-* 靠谱的网络。最好挂好了 VPN 或者配置好了 ShadowSocks 透明代理，或者使用前面提到过的 ProxyChains。
 
 {% highlight bash %}
 Checking 'working-make'... ok.
@@ -339,3 +346,144 @@ make V=99 -j 1
 [   29.545252] br-lan: port 1(eth0) entered forwarding state
 [   69.213001] random: nonblocking pool is initialized
 {% endhighlight %}
+
+这样我们初步的准备就算是完成了，我们可以开始下一步工作了。
+
+## BuildRoot - Customization
+
+我们上一步使用默认设置编译的固件实在是功能贫乏，因此我们需要增加最基本的功能以保证正常的使用。
+
+同时为了缩小体积我们需要删除不会用到的部分。固件默认包含的功能中 IPv6 、opkg 包管理器以及其他很多功能都是我们不需要的。我们将在下面的流程中把它们逐个找出来并移除。
+
+打开 make menuconfig 准备设置。
+
+首先，LuCI 当然是重点。选中 LuCI - Collections - luci。当前面的选项变为 <*> 时代表已经正确选中。
+
+![](../assets/images/openwrt-customize-2/second-make-luci.png)
+
+选中 luci 将会同时选中相关的一系列包。我们在 LuCI - Modules 中选中 Minify Lua Sources 压缩 Lua 脚本以增大固件中的可用空间。
+
+![](../assets/images/openwrt-customize-2/second-make-luci-modules.png)
+
+选择主题。一般只需要默认的 luci-theme-bootstrap 就可以了。如果剩余空间足够大，也可以体验一下全新的 Material 风格主题。
+
+![](../assets/images/openwrt-customize-2/second-make-luci-themes.png)
+
+LuCI 的定制就算完成，下面我们开始从头看每一个选项。
+
+首先是 Global 部分。这里我们可以对整个编译流程进行控制，也可以对内核支持的功能进行简单的定制。
+
+![](../assets/images/openwrt-customize-2/second-make-global.png)
+
+由于 Flash 的可用空间实在是太小，我们尽量关掉下面与调试信息相关的选项：
+
+* Crash Logging
+* Support for paging of anonymous memory (swap)
+* Compile the kernel with symbol table information
+* Compile the kernel with debug information
+
+同时打开下面的选项以裁剪固件大小。选中下面两个选项相当于彻底断绝了在路由器上通过包管理器安装软件的可能性（需要就重新编译嘛 2333）。
+
+* Remove ipkg/opkg status data files in final images
+* Strip unnecessary exports from the kernel image
+* Strip unnecessary functions from libraries
+
+另外，为减小体积我们需要移除 IPv6 相关支持。在这里关闭 IPv6 支持标记，以便删除 IPv6 相关的模块。
+
+* Enable IPv6 support in packages
+
+全局定制完成后，我们看后面的选项。
+
+* Advanced configuration options (for developers)
+* Build the OpenWrt Image Builder
+* Build the OpenWrt SDK
+* Package the OpenWrt-based Toolchain
+
+这四个选项是为开发者准备的。Advanced configuration options 中可以给工具链指定更多参数，另外的三个则是生成 SDK 和 ImageBuilder 以及打包自带工具链，我们不用管。
+
+Image Configuration 中可以指定一些其他选项，比如 Init 脚本和包管理器相关信息。
+
+![](../assets/images/openwrt-customize-2/second-make-image-configuration.png)
+
+我们在这里去掉 Feeds 以减少空间：
+
+* Separate feed repositories
+
+之后是 Base System 部分，这里是系统核心支持相关的部分。
+
+![](../assets/images/openwrt-customize-2/second-make-base-system.png)
+
+删除 opkg【就几百 KB 空间还装什么软件，包管理器删掉】。
+
+* opkg
+
+WR703N 总共只有一个以太网口，交换机配置工具也可以删掉。
+
+* swconfig
+
+这里就完成了。
+
+下面几个选项都是酱油。
+
+* Administration 页中我们并没有什么用得上的，跳过。
+* Boot Loaders 我们直接用已经刷好的 Breed，跳过。
+* Development 页面……我们路由器上并没有空间放 gcc 和 gdb。跳过。
+* Extra Packages 是空的，不用管了。
+* Firmware 并不用选，跳过。
+
+Kernel Modules 我们就要仔细选择了。
+
+![](../assets/images/openwrt-customize-2/second-make-kernel-modules.png)
+
+我们在这里需要做的事情是添加 USB RNDIS 设备支持以便可以正确实现通过 USB 线共享网络。
+
+进入 USB Support 页面，可以看到官方已经帮我们选中了 kmod-usb-ohci 和 kmod-usb2。
+
+![](../assets/images/openwrt-customize-2/second-make-kernel-modules-usb-support.png)
+
+我们选中 kmod-usb-net 和下面的 kmod-usb-net-rndis：
+
+![](../assets/images/openwrt-customize-2/second-make-kernel-modules-usb-support-rndis.png)
+
+这里就结束了。
+
+为了减小空间，我们还要去掉 MAC80211 的调试信息部分。进入 Wireless Drivers 页面：
+
+![](../assets/images/openwrt-customize-2/second-make-kernel-modules-wireless-drivers.png)
+
+进入 kmod-mac80211，关闭 DebugFS 支持。
+
+![](../assets/images/openwrt-customize-2/second-make-kernel-modules-wireless-drivers-mac80211.png)
+
+内核部分的定制就完成了。
+
+【在 15.05.1 中关闭 IPv6 还需要在这里手动去除一部分模块的支持，不过最新的 Trunk 似乎已经通过一个选项帮我们完成了所有任务】
+
+后面又是几个酱油选项：
+
+* Languages 页上……我们的路由器上并没有空间运行 PHP 或者 Node.js，跳过。
+* Libraries 页不太需要我们自己管，选中某一个功能时系统会自动在这里选中依赖的库。跳过。
+* LuCI 上面选过了。
+* Mail 页有一些邮件工具，我们用不上，跳过。
+* Multimedia 页有一些 mjpg-streamer 之类的，挂摄像头监控用。我们也用不上，跳过。
+
+Network 页上我们去掉 odhcpd 就行，因为它的功能我们直接用 dnsmasq 提供了。
+
+![](../assets/images/openwrt-customize-2/second-make-network.png)
+
+这里还有一个 uclient-fetch 我们应该用不上，也顺便删掉吧。
+
+这样 Network 部分就完成了。
+
+后面两个酱油：
+
+* Sound 不用多解释了吧。话说礼貌居然有了 mpg123……简直感人……不过我们这里还是用不上，跳过。
+* Utilities 实用工具，目前我们不是很用得上，跳过。有需要的话可以自己挑。
+
+最后因为上面我们关掉了 MAC80211 的 DebugFS 支持，我们还需要回到 Global 中关掉 Debug Filesystem。
+
+![](../assets/images/openwrt-customize-2/second-make-global-final.png)
+
+至此配置全部完成。可以保存编译了。
+
+
