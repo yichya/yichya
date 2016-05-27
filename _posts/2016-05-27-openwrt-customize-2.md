@@ -496,5 +496,8 @@ make V=99 -j
 
 可以看到，虽然添加了 LuCI 和 RNDIS 支持，但由于我们选用正确的选项进行精简，得到的 Bin 文件反而还小了 100 多 KB。
 
-刷上看看吧。
+刷上。成功启动，并且看到了 LuCI 界面。
 
+![](../assets/images/openwrt-customize-2/second-make-boot-luci.png)
+
+定制成功 :)
