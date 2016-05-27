@@ -5,9 +5,11 @@ title: 定制 OpenWrt 固件 (2) BuildRoot
 
 上一次似乎说想用 MT7620A 的路由器来演示更进一步的 ImageBuilder 用法。不过呢，我改主意了。虽然我现在手里有三个 MT7620A 的路由器吧。
 
-至于为什么改主意……一方面是 OpenWrt 官方的 Designated Driver（16.x）版仍然没有正式发布，然而只有这个版本才添加了对极 1s 等国产智能路由器的官方支持。
+至于为什么改主意……OpenWrt 官方的 Designated Driver（16.x）版仍然没有正式发布，然而只有这个版本才添加了对极 1s 等国产智能路由器的官方支持。
 
 所以嘛，我们跳过这一步，直接来搞 BuildRoot。
+
+<!-- more -->
 
 ## TL-WR703N Original version
 
