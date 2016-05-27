@@ -4,7 +4,7 @@
 $base-font: 'Lato', Calibri, Arial, sans-serif;
 $heading-font: $base-font;
 $caption-font: $base-font;
-$code-font: monospace;
+$code-font: Consolas;
 $alt-font: serif;
 
 $doc-font-size: 16;
@@ -45,4 +45,4 @@ $info                   : #308cbc;
 
 $small               : "only screen and (min-width: 30em)";
 $medium              : "only screen and (min-width: 48em)";
-$large               : "only screen and (min-width: 85em)";
+$large               : "only screen and (min-width: 62.5em)";
