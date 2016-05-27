@@ -208,7 +208,7 @@ make V=99 -j 1
 
 启动日志如下：
 
-{% highlight dmesg %}
+{% highlight bash %}
 [    0.000000] Linux version 4.1.23 (yichya@yichya-laptop) (gcc version 5.3.0 (OpenWrt GCC 5.3.0 r49377) ) #1 Fri May 27 03:59:08 UTC 2016
 [    0.000000] MyLoader: sysp=30e153ba, boardp=ad65edf1, parts=b589d2c4
 [    0.000000] bootconsole [early0] enabled
