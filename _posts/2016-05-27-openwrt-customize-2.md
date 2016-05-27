@@ -500,4 +500,64 @@ make V=99 -j
 
 ![](../assets/images/openwrt-customize-2/second-make-boot-luci.png)
 
+测一下 RNDIS 支持是否正常。
+
+![](../assets/images/openwrt-customize-2/second-make-boot-rndis.png)
+
 定制成功 :)
+
+## BuildRoot - Add ShadowSocksR
+
+前面我们已经顺利的完成了定制，现在我们需要增加 ShadowSocksR 透明代理支持。
+
+ShadowSocksR 的源代码可以在[【这里】](https://github.com/bettermanbao/openwrt-shadowsocksR-libev-full) 找到。
+
+首先，git clone。
+
+{% highlight bash %}
+git clone https://github.com/bettermanbao/openwrt-shadowsocksR-libev-full.git package/shadowsocksR-libev-full
+{% endhighlight %}
+
+然后 make menuconfig。
+
+按照作者的说明，我们需要进行下面这些操作：
+
+* 选中 shadowsocks-libev-gfwlist-4M
+* 安装完整版的 dnsmasq（dnsmasq-full）
+* 打开 wget 的 -T 选项支持
+
+首先选中 Network 页中的 shadowsocks-libev-gfwlist-4M。
+
+![](../assets/images/openwrt-customize-2/third-make-shadowsocks-4M.png)
+
+回到 Base System，我们可以看到 dnsmasq-full 已经被自动选中。我们在这里去掉精简版的 dnsmasq，同时去除完整版的 DNSSEC、权威 DNS、ConnTrack 支持这三个特性，只保留 IPset。
+
+![](../assets/images/openwrt-customize-2/third-make-dnsmasq-full.png)
+
+选中上面的 busybox，对 busybox 进行定制。
+
+![](../assets/images/openwrt-customize-2/third-make-busybox-custom.png)
+
+选中 Networking Utilities，在下面找到 wget，然后选中 -T Timeout 支持。同时我们也可以顺便关闭一些 IPv6 支持相关的选项。
+
+![](../assets/images/openwrt-customize-2/third-make-wget-timeout.png)
+
+完成之后保存，编译即可。我们看到这次编译后报的体积比之前增大了大约 400KB，不过还没有超出大小。
+
+![](../assets/images/openwrt-customize-2/third-make-binary.png)
+
+编译成功之后刷进去看看吧。
+
+![](../assets/images/openwrt-customize-2/third-make-boot-luci.png)
+
+顺利启动，RNDIS 也可以正常工作。
+
+![](../assets/images/openwrt-customize-2/third-make-shadowsocks.png)
+
+ShadowSocksR 顺利加载。顺便 ShadowSocksR 的作者好像在这里填了一个可以随便用的 ShadowSocks 服务器账号，真是 233333
+
+![](../assets/images/openwrt-customize-2/third-make-shadowsocks-watchdog.png)
+
+Watchdog 顺利启动。实测上 Google 也没有问题了。
+
+那么我们本次定制就顺利完成了。感觉好像不会有下次了吧 23333 说不定呢。
