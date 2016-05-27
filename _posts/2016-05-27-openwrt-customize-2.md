@@ -39,7 +39,7 @@ title: 定制 OpenWrt 固件 (2) BuildRoot
 
 Breed 界面是这个样子的，可以看到这台设备并没有进行硬件改动，仍然是出厂时的 32MB RAM + 4MB Flash 搭配。
 
-【图 2，Breed】
+![](../assets/images/openwrt-customize-2/breed.png)
 
 拆 TTL 线的时候就比较悲剧……焊点小也就算了，还特么特别容易掉。虽然我小心小心再小心不过还是手抖毁掉了一个焊盘。不过无所谓了。
 
@@ -171,4 +171,169 @@ make V=99 -j
 
 一觉醒来，发现编译失败了 :) 各种重试中。
 
+如果总是失败，可以试着改用参数
 
+{% highlight bash %}
+make V=99 -j 1
+{% endhighlight %}
+
+禁用并行操作，这样可能可以避免由于依赖关系（后面编译的代码依赖前面编译出来的目标文件）未满足产生的错误。
+
+另外一般情况下失败也不需要 make clean，重新 make 即可。程序会自动从上次中断的地方继续。
+
+---------
+
+重试了好几次之后终于编译成功。
+
+![](../assets/images/openwrt-customize-2/first-make-done.png)
+
+我们已经可以看到生成的 factory 和 sysupgrade 文件，这说明我们的工具链可以正常工作。
+
+![](../assets/images/openwrt-customize-2/first-make-binary.png)
+
+可以试着刷一下，看看新的固件是不是可以正常工作。
+
+![](../assets/images/openwrt-customize-2/first-make-boot.png)
+
+可以顺利通过 SSH 登录到路由器。版本是 Designated Driver r49377，内核版本 4.1.23。
+
+启动日志如下：
+
+{% highlight dmesg %}
+[    0.000000] Linux version 4.1.23 (yichya@yichya-laptop) (gcc version 5.3.0 (OpenWrt GCC 5.3.0 r49377) ) #1 Fri May 27 03:59:08 UTC 2016
+[    0.000000] MyLoader: sysp=30e153ba, boardp=ad65edf1, parts=b589d2c4
+[    0.000000] bootconsole [early0] enabled
+[    0.000000] CPU0 revision is: 00019374 (MIPS 24Kc)
+[    0.000000] SoC: Atheros AR9330 rev 1
+[    0.000000] Determined physical RAM map:
+[    0.000000]  memory: 02000000 @ 00000000 (usable)
+[    0.000000] Initrd not found or empty - disabling initrd
+[    0.000000] Zone ranges:
+[    0.000000]   Normal   [mem 0x0000000000000000-0x0000000001ffffff]
+[    0.000000] Movable zone start for each node
+[    0.000000] Early memory node ranges
+[    0.000000]   node   0: [mem 0x0000000000000000-0x0000000001ffffff]
+[    0.000000] Initmem setup node 0 [mem 0x0000000000000000-0x0000000001ffffff]
+[    0.000000] On node 0 totalpages: 8192
+[    0.000000] free_area_init_node: node 0, pgdat 803cbe20, node_mem_map 81000000
+[    0.000000]   Normal zone: 64 pages used for memmap
+[    0.000000]   Normal zone: 0 pages reserved
+[    0.000000]   Normal zone: 8192 pages, LIFO batch:0
+[    0.000000] Primary instruction cache 64kB, VIPT, 4-way, linesize 32 bytes.
+[    0.000000] Primary data cache 32kB, 4-way, VIPT, cache aliases, linesize 32 bytes
+[    0.000000] pcpu-alloc: s0 r0 d32768 u32768 alloc=1*32768
+[    0.000000] pcpu-alloc: [0] 0 
+[    0.000000] Built 1 zonelists in Zone order, mobility grouping on.  Total pages: 8128
+[    0.000000] Kernel command line:  board=TL-WR703N  console=ttyATH0,115200 rootfstype=squashfs,jffs2 noinitrd
+[    0.000000] PID hash table entries: 128 (order: -3, 512 bytes)
+[    0.000000] Dentry cache hash table entries: 4096 (order: 2, 16384 bytes)
+[    0.000000] Inode-cache hash table entries: 2048 (order: 1, 8192 bytes)
+[    0.000000] Writing ErrCtl register=00000000
+[    0.000000] Readback ErrCtl register=00000000
+[    0.000000] Memory: 27940K/32768K available (2783K kernel code, 142K rwdata, 684K rodata, 284K init, 195K bss, 4828K reserved, 0K cma-reserved)
+[    0.000000] SLUB: HWalign=32, Order=0-3, MinObjects=0, CPUs=1, Nodes=1
+[    0.000000] NR_IRQS:83
+[    0.000000] Clocks: CPU:400.000MHz, DDR:400.000MHz, AHB:200.000MHz, Ref:25.000MHz
+[    0.000000] clocksource MIPS: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 9556302233 ns
+[    0.000013] sched_clock: 32 bits at 200MHz, resolution 5ns, wraps every 10737418237ns
+[    0.007856] Calibrating delay loop... 265.42 BogoMIPS (lpj=1327104)
+[    0.089114] pid_max: default: 32768 minimum: 301
+[    0.093895] Mount-cache hash table entries: 1024 (order: 0, 4096 bytes)
+[    0.100331] Mountpoint-cache hash table entries: 1024 (order: 0, 4096 bytes)
+[    0.111217] clocksource jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 19112604462750000 ns
+[    0.120536] NET: Registered protocol family 16
+[    0.125752] MIPS: machine is TP-LINK TL-WR703N v1
+[    0.395236] Switched to clocksource MIPS
+[    0.399521] NET: Registered protocol family 2
+[    0.403856] TCP established hash table entries: 1024 (order: 0, 4096 bytes)
+[    0.409442] TCP bind hash table entries: 1024 (order: 0, 4096 bytes)
+[    0.415754] TCP: Hash tables configured (established 1024 bind 1024)
+[    0.422205] UDP hash table entries: 256 (order: 0, 4096 bytes)
+[    0.427925] UDP-Lite hash table entries: 256 (order: 0, 4096 bytes)
+[    0.434488] NET: Registered protocol family 1
+[    0.438598] PCI: CLS 0 bytes, default 32
+[    0.440063] futex hash table entries: 256 (order: -1, 3072 bytes)
+[    0.468504] squashfs: version 4.0 (2009/01/31) Phillip Lougher
+[    0.472899] jffs2: version 2.2 (NAND) (SUMMARY) (LZMA) (RTIME) (CMODE_PRIORITY) (c) 2001-2006 Red Hat, Inc.
+[    0.486706] io scheduler noop registered
+[    0.489182] io scheduler deadline registered (default)
+[    0.494591] Serial: 8250/16550 driver, 1 ports, IRQ sharing disabled
+[    0.501399] ar933x-uart: ttyATH0 at MMIO 0x18020000 (irq = 11, base_baud = 1562500) is a AR933X UART
+[    0.510234] console [ttyATH0] enabled
+[    0.517047] bootconsole [early0] disabled
+[    0.528475] m25p80 spi0.0: found s25sl032p, expected m25p80
+[    0.532610] m25p80 spi0.0: s25sl032p (4096 Kbytes)
+[    0.538724] 5 tp-link partitions found on MTD device spi0.0
+[    0.542929] Creating 5 MTD partitions on "spi0.0":
+[    0.547768] 0x000000000000-0x000000020000 : "u-boot"
+[    0.553949] 0x000000020000-0x000000150ae4 : "kernel"
+[    0.558862] 0x000000150ae4-0x0000003f0000 : "rootfs"
+[    0.563668] mtd: device 2 (rootfs) set to be root filesystem
+[    0.568299] 1 squashfs-split partitions found on MTD device rootfs
+[    0.574372] 0x000000330000-0x0000003f0000 : "rootfs_data"
+[    0.580918] 0x0000003f0000-0x000000400000 : "art"
+[    0.585601] 0x000000020000-0x0000003f0000 : "firmware"
+[    0.610537] libphy: ag71xx_mdio: probed
+[    1.196944] ag71xx ag71xx.0: connected to PHY at ag71xx-mdio.1:04 [uid=004dd041, driver=Generic PHY]
+[    1.205691] eth0: Atheros AG71xx at 0xb9000000, irq 4, mode:MII
+[    1.213157] NET: Registered protocol family 10
+[    1.220700] NET: Registered protocol family 17
+[    1.223794] bridge: automatic filtering via arp/ip/ip6tables has been deprecated. Update your scripts to load br_netfilter if you need this.
+[    1.236553] 8021q: 802.1Q VLAN Support v1.8
+[    1.250319] VFS: Mounted root (squashfs filesystem) readonly on device 31:2.
+[    1.258178] Freeing unused kernel memory: 284K (803e9000 - 80430000)
+[    2.491603] init: Console is alive
+[    2.493838] init: - watchdog -
+[    3.762590] usbcore: registered new interface driver usbfs
+[    3.766833] usbcore: registered new interface driver hub
+[    3.772048] usbcore: registered new device driver usb
+[    3.784412] ehci_hcd: USB 2.0 'Enhanced' Host Controller (EHCI) Driver
+[    3.791597] ehci-platform: EHCI generic platform driver
+[    3.795558] ehci-platform ehci-platform: EHCI Host Controller
+[    3.801145] ehci-platform ehci-platform: new USB bus registered, assigned bus number 1
+[    3.811144] ehci-platform ehci-platform: irq 3, io mem 0x1b000000
+[    3.835287] ehci-platform ehci-platform: USB 2.0 started, EHCI 1.00
+[    3.841369] hub 1-0:1.0: USB hub found
+[    3.844247] hub 1-0:1.0: 1 port detected
+[    3.851955] ohci_hcd: USB 1.1 'Open' Host Controller (OHCI) Driver
+[    3.858630] ohci-platform: OHCI generic platform driver
+[    3.867237] init: - preinit -
+[    4.631898] IPv6: ADDRCONF(NETDEV_UP): eth0: link is not ready
+[    4.664682] random: procd urandom read with 7 bits of entropy available
+[    7.256722] eth0: link up (100Mbps/Full duplex)
+[    7.259832] IPv6: ADDRCONF(NETDEV_CHANGE): eth0: link becomes ready
+[    7.836137] mount_root: jffs2 not ready yet, using temporary tmpfs overlay
+[    7.877141] eth0: link down
+[    7.893350] procd: - early -
+[    7.894918] procd: - watchdog -
+[    8.576824] procd: - ubus -
+[    8.631012] procd: - init -
+[    9.564509] ip6_tables: (C) 2000-2006 Netfilter Core Team
+[    9.588227] Loading modules backported from Linux version v4.4-rc5-1913-gc8fdf68
+[    9.594170] Backport generated by backports.git backports-20151218-0-g2f58d9d
+[    9.605565] ip_tables: (C) 2000-2006 Netfilter Core Team
+[    9.623499] nf_conntrack version 0.5.0 (441 buckets, 1764 max)
+[    9.676706] xt_time: kernel timezone is -0000
+[    9.759251] PPP generic driver version 2.4.2
+[    9.765861] NET: Registered protocol family 24
+[    9.829093] ath: EEPROM regdomain: 0x0
+[    9.829123] ath: EEPROM indicates default country code should be used
+[    9.829137] ath: doing EEPROM country->regdmn map search
+[    9.829164] ath: country maps to regdmn code: 0x3a
+[    9.829180] ath: Country alpha2 being used: US
+[    9.829193] ath: Regpair used: 0x3a
+[    9.841020] ieee80211 phy0: Selected rate control algorithm 'minstrel_ht'
+[    9.845890] ieee80211 phy0: Atheros AR9330 Rev:1 mem=0xb8100000, irq=2
+[   18.544432] jffs2_scan_eraseblock(): End of filesystem marker found at 0x0
+[   18.572192] jffs2_build_filesystem(): unlocking the mtd device... done.
+[   18.577351] jffs2_build_filesystem(): erasing all blocks after the end marker... done.
+[   22.435929] jffs2: notice: (888) jffs2_build_xattr_subsystem: complete building xattr subsystem, 0 of xdatum (0 unchecked, 0 orphan) and 0 of xref (0 dead, 0 orphan) found.
+[   25.559368] device eth0 entered promiscuous mode
+[   25.564213] IPv6: ADDRCONF(NETDEV_UP): br-lan: link is not ready
+[   27.536751] eth0: link up (100Mbps/Full duplex)
+[   27.539892] br-lan: port 1(eth0) entered forwarding state
+[   27.545310] br-lan: port 1(eth0) entered forwarding state
+[   27.585894] IPv6: ADDRCONF(NETDEV_CHANGE): br-lan: link becomes ready
+[   29.545252] br-lan: port 1(eth0) entered forwarding state
+[   69.213001] random: nonblocking pool is initialized
+{% endhighlight %}
