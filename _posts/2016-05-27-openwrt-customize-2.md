@@ -484,6 +484,17 @@ Network 页上我们去掉 odhcpd 就行，因为它的功能我们直接用 dns
 
 ![](../assets/images/openwrt-customize-2/second-make-global-final.png)
 
-至此配置全部完成。可以保存编译了。
+至此配置全部完成。保存，可以开始准备编译了。
 
+{% highlight bash %}
+make V=99 -j
+{% endhighlight %}
+
+第二次编译很快，不到三分钟我们就得到了 bin 文件。
+
+![](../assets/images/openwrt-customize-2/second-make-binary.png)
+
+可以看到，虽然添加了 LuCI 和 RNDIS 支持，但由于我们选用正确的选项进行精简，得到的 Bin 文件反而还小了 100 多 KB。
+
+刷上看看吧。
 
