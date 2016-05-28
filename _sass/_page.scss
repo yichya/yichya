@@ -130,9 +130,9 @@ header .entry-meta {
 		display: block;
 	}
 }
-#menu{
-  margin-bottom: 48px;
-}
+// #menu{
+//   margin-bottom: 48px;
+// }
 #post,
 #page {
 	.entry-content {
@@ -527,7 +527,7 @@ ul.social-buttons li a:active {
 		height: 100%;
 		padding: 0;
 		@media #{$large} {
-			max-width: 900px;
+			max-width: 1250px;
 		}
 	}
 }
