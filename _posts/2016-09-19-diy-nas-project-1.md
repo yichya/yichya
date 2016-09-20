@@ -144,7 +144,7 @@ XP 还是不太方便，比如承载网络、DLNA 之类的都不太好弄。换
 
 ## Windows Server 2008 R2
 
-因为 Win7 不能同时在两个接口上开网络共享，承载网络又不能桥接，以及一堆各种各样的麻烦比如 Ubuntu Server 死活装不上去之类的……我决定换 Windows 2008 R2。
+因为 Win7 不能同时在两个接口上开网络共享，承载网络又不能桥接，我决定换 Windows 2008 R2。
 
 配了半天路由表、DHCP 之类的，才勉强能用……
 
@@ -157,6 +157,20 @@ XP 还是不太方便，比如承载网络、DLNA 之类的都不太好弄。换
 * 经常莫名其妙的连不上 PPPoE。
 
 总之还是卸了。
+
+## Ubuntu Server & VMware ESXi
+
+其实最初我是希望在上面装 Ubuntu Server，这样之后还能配置透明代理，跑些服务什么的也比较简单，可是死活装不上去。
+
+后来看网上有人折腾用 ESXi 同时带黑群晖和 RouterOS，性能似乎还不错，我也想用 ESXi 来一波虚拟化的，可惜也是完全装不上去。
+
+问题基本上集中在下面几个地方：
+
+* 主板的显示输出默认是 LVDS 而且关不掉。BIOS 里面是有选项的，但是又被屏蔽了。Ubuntu 桌面版和 ESXi 都遇到了这一问题。
+* USB 键盘鼠标支持不完善。Ubuntu 桌面版和 ESXi 也都遇到了这一问题。
+* 网卡驱动不全。这个主要是 ESXi 遇到了问题。
+
+至于 Ubuntu Server，问题更迷……总之我也是没解决，放弃了。
 
 ## RouterOS
 
@@ -178,21 +192,89 @@ XP 还是不太方便，比如承载网络、DLNA 之类的都不太好弄。换
 
 ![](../assets/images/diy-nas-project-1/routeros-real.png)
 
-RouterOS 的无线性能非常之好。单天线 150MBPS 毫无压力，自带 SMB 共享在信道比较干净（G302 测试）的情况下能达到近 10MB/s 的速度，比较拥挤（宿舍，挑了半天选了最干净的信道 8）大概有 5-6MB/s。 不过比较奇怪的是有线性能只有 30MB/s 左右，差不多只有 Windows 下的 60%。
-
-RouterOS 5.24 内核是 2.6.35。大概是相当有年头的一个 LTS 吧……我没记错的话 Ubuntu 10.10 用的就是这个版本。
+RouterOS 的无线性能非常之好。单天线 150MBPS 毫无压力，自带 SMB 共享在信道比较干净（G302 测试）的情况下能达到近 10MB/s 的速度，比较拥挤的情况下（宿舍，几乎每个信道都被占了，挑了半天选了最干净的信道 8）大概有 5-6MB/s。 不过比较奇怪的是有线性能只有 30MB/s 左右，差不多只有 Windows 下的 60%。
 
 我下的这个版本是破解过的，其中除了授权破解之外还有插件破解，也就是支持运行一些 Linux 程序。我在网上下载到了一个基本版的 Debian，成功 chroot 进去。需要注意的是 RouterOS 内核不支持 Swap，不过这个主板 2GB 内存应该也不太容易烧光吧。
 
-原来的 Debian 版本是 squeeze。感觉实在是太老，于是改了下升级到 wheezy。装了 Transmission，下载一切正常。
+原来的 Debian 版本是 squeeze。感觉实在是太老，于是改了下升级到 wheezy。装了 Transmission，下载一切正常。RouterOS 5.24 内核是 2.6.35。大概是相当有年头的一个 LTS 吧……我没记错的话 Ubuntu 10.10 用的就是这个版本。不太敢再升级 Debian 了……说不定会出现兼容性问题。
 
 本来就打算一直用下去了，不过后来发现一个非常迷的问题：重启时会无法挂载硬盘……必须拔出来，开机状态下插进去才能正常使用。这也不成啊……后来我在买正版 RouterOS 和换 OS 之间纠结了半天还是觉得换 OS 吧。
 
 ## OPNsense/pfsense
 
-这俩只是装上了，然而无线驱动都是残疾。跳过。
+这俩只是装上了，然而无线驱动都是残疾。
+
+其他的，网络似乎只能划分为 LAN 和 WAN 两个区域，不像 OpenWRT 可以自定义防火墙区域。并不优雅。
+
+总之感觉没啥可说的……跳过吧。
 
 # Final Solution: OpenWRT
 
-嘛，就是当前方案啦。这个我下面会着重说一下。
- 
+嘛，就是当前方案啦。
+
+## Official Edition
+
+先上的是官方版。用起来基本上正常，性能啥的都还不错。
+
+然而，官方版本有很多不是很优雅的地方，比如：
+
+* 内核没有 ACPI 支持，导致系统功耗高的吓人
+* overlay 空间太小
+* 不便于集成 ShadowSocksR 进行透明代理（当然这个是 ShadowSocksR 的锅，不过总是得处理的）
+* 不自带 Atheros 无线网卡驱动（虽然可以装）
+
+除了最后一个都没啥办法，只能自己编译了。
+
+## Add ACPI Support
+
+参考 [https://gist.github.com/huming2207/47b17be9f27eb4b4e908801e31bfa4fe](https://gist.github.com/huming2207/47b17be9f27eb4b4e908801e31bfa4fe) 在 .config 里面添加了一些选项，打开内核的 ACPI 支持。
+
+{% highlight makefile %}
+CONFIG_ACPI=y
+CONFIG_ACPI_AC=y
+CONFIG_ACPI_BATTERY=y
+CONFIG_ACPI_BUTTON=y
+CONFIG_ACPI_FAN=y
+CONFIG_ACPI_LEGACY_TABLES_LOOKUP=y
+CONFIG_ACPI_PROCESSOR=y
+CONFIG_ACPI_THERMAL=y
+CONFIG_CPU_FREQ=y
+CONFIG_CPU_FREQ_DEFAULT_GOV_ONDEMAND=y
+CONFIG_CPU_FREQ_GOV_COMMON=y
+CONFIG_CPU_FREQ_GOV_ONDEMAND=y
+CONFIG_CPU_FREQ_GOV_PERFORMANCE=y
+CONFIG_CPU_FREQ_STAT=y
+CONFIG_CPU_FREQ_STAT_DETAILS=y
+CONFIG_CPU_IDLE=y
+CONFIG_CPU_IDLE_GOV_LADDER=y
+CONFIG_CPU_SUP_AMD=y
+CONFIG_CPU_SUP_CENTAUR=y
+CONFIG_CPU_SUP_CYRIX_32=y
+CONFIG_CPU_SUP_INTEL=y
+CONFIG_CPU_SUP_TRANSMETA_32=y
+CONFIG_CPU_SUP_UMC_32=y
+CONFIG_HAVE_ACPI_APEI=y
+CONFIG_HAVE_ACPI_APEI_NMI=y
+CONFIG_THERMAL=y
+CONFIG_THERMAL_DEFAULT_GOV_STEP_WISE=y
+CONFIG_THERMAL_GOV_STEP_WISE=y
+CONFIG_X86_ACPI_CPUFREQ=y
+CONFIG_X86_ACPI_CPUFREQ_CPB=y
+CONFIG_X86_THERMAL_VECTOR=y
+{% endhighlight %}
+
+选择 x86_64 配置，设定好其他的东西之后把这些粘贴到最后，编译即可。
+
+效果还是相当明显的。之前从电源指示灯上就能看出运行功耗非常高，而且散热片十分烫手。之后运行功耗大致和 WES7 持平，散热片还要更凉一些。
+
+## Other Components
+
+我添加了可能会用到的一些组件，包括 Transmission、HD-Idle、OpenVPN 等。
+
+![](../assets/images/diy-nas-project-1/openwrt-services.png)
+
+另外调整了 overlay 的大小到 512MB。剩下的空间单独分了一个区，用于 Debootstrap。
+
+# Finally
+
+目前宿舍还没有开始限电。等到限电开始的时候，我会根据情况再更新一部分信息。
