@@ -60,7 +60,7 @@ title: DIY NAS Project (1)
 
 硬盘还是不错的【可惜现在硬盘已经卖光了】，还送了两颗固定用的螺丝，免得我到处找或者买了。不过后来那个盒子并没用上【心疼三分钟】。
 
-# Let's do this
+# First Hardware Revision
 
 东西都已经下了单，那什么到了就装什么咯。来吧。
 
@@ -121,8 +121,6 @@ XP 还是不太方便，比如承载网络、DLNA 之类的都不太好弄。换
 天线到手，硬件齐活。这么着看还是足够有逼格的。
 
 ![](../assets/images/diy-nas-project-1/final-antenna.webp)
-
-后面硬件基本没有改动，只有些换铜柱、重新理线之类的小事情。之后会补上一张完全体的图片。
 
 # Select Operating System to start
 
@@ -275,6 +273,50 @@ CONFIG_X86_THERMAL_VECTOR=y
 
 另外调整了 overlay 的大小到 512MB。剩下的空间单独分了一个区，用于 Debootstrap。
 
+# Second Hardware Revision
+
+80GB 的硬盘还是明显太小了些，即使后面从贵协某台机器上换下了一块儿 160GB 的仍觉不够。然而由于供电条件的严格，又不敢随意购买大容量硬盘（Seagate 标准的 1TB 台式机硬盘要求 5v 0.75a、12v 0.75a 的供电），因此新硬盘的事情一直没着落。
+
+偶然在狗东上搜了下硬盘，发现了一种很特别的转速 5900RPM 的硬盘，供电要求 5v 0.6a 左右，12v 更是不到 0.4a。这简直是为我量身定做的嘛。当晚下单，第二天就到货了。
+
+我买的是狗东上仅仅比台式机硬盘稍贵的 Surveillance HDD SV7，2TB。
+
+拿到它之后发现傻逼了……完全忘了双碟硬盘厚度的问题……
+
+![](../assets/images/diy-nas-project-1/new-hdd.webp)
+
+之前的理线方案完全没考虑到这种规格的硬盘，嘛，还好前面没介绍我是怎么理线的。下面简单介绍下吧。
+
+SATA 数据线我选择了一条联想台式机自带的，长短非常合适，而且恰好只有一边接口有金属卡子，完全满足我的需求。
+
+![](../assets/images/diy-nas-project-1/hdd-sata.webp)
+
+硬盘的电源线就要麻烦不少。
+
+先从这里穿过。
+
+![](../assets/images/diy-nas-project-1/hdd-power-1.webp)
+
+绕一圈。这两张上也有 WiFi 天线的固定方案，如果觉得不错的话可以参考。
+
+![](../assets/images/diy-nas-project-1/hdd-power-2.webp)
+
+在前面的那个柱子上如法炮制，不过要绕两圈。
+
+![](../assets/images/diy-nas-project-1/hdd-power-3.webp)
+
+伸出来的电源线接头在压住硬盘用的铁丝上再绕一圈，注意方向。
+
+![](../assets/images/diy-nas-project-1/hdd-power-4.webp)
+
+抽出来插好就行了。下面是效果图，全高硬盘放进去基本上比较顺畅，没有什么大问题。
+
+![](../assets/images/diy-nas-project-1/new-hdd-2.webp)
+
+![](../assets/images/diy-nas-project-1/new-hdd-1.webp)
+
 # Finally
+
+NAS 定制初步计划就完成了。相当长一段时间内应该是再也不需要担心硬盘容量不够的问题了……
 
 目前宿舍还没有开始限电。等到限电开始的时候，我会根据情况再更新一部分信息。
