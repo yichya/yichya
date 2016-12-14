@@ -1,6 +1,6 @@
 ---
 layout: post
-title: DIY NAS Project (1)
+title: DIY NAS Project (1) Hardware and OpenWRT
 ---
 
 先扯点儿题外的。
@@ -225,43 +225,7 @@ RouterOS 的无线性能非常之好。单天线 150MBPS 毫无压力，自带 S
 
 ## Add ACPI Support
 
-参考 [https://gist.github.com/huming2207/47b17be9f27eb4b4e908801e31bfa4fe](https://gist.github.com/huming2207/47b17be9f27eb4b4e908801e31bfa4fe) 在 .config 里面添加了一些选项，打开内核的 ACPI 支持。
-
-{% highlight makefile %}
-CONFIG_ACPI=y
-CONFIG_ACPI_AC=y
-CONFIG_ACPI_BATTERY=y
-CONFIG_ACPI_BUTTON=y
-CONFIG_ACPI_FAN=y
-CONFIG_ACPI_LEGACY_TABLES_LOOKUP=y
-CONFIG_ACPI_PROCESSOR=y
-CONFIG_ACPI_THERMAL=y
-CONFIG_CPU_FREQ=y
-CONFIG_CPU_FREQ_DEFAULT_GOV_ONDEMAND=y
-CONFIG_CPU_FREQ_GOV_COMMON=y
-CONFIG_CPU_FREQ_GOV_ONDEMAND=y
-CONFIG_CPU_FREQ_GOV_PERFORMANCE=y
-CONFIG_CPU_FREQ_STAT=y
-CONFIG_CPU_FREQ_STAT_DETAILS=y
-CONFIG_CPU_IDLE=y
-CONFIG_CPU_IDLE_GOV_LADDER=y
-CONFIG_CPU_SUP_AMD=y
-CONFIG_CPU_SUP_CENTAUR=y
-CONFIG_CPU_SUP_CYRIX_32=y
-CONFIG_CPU_SUP_INTEL=y
-CONFIG_CPU_SUP_TRANSMETA_32=y
-CONFIG_CPU_SUP_UMC_32=y
-CONFIG_HAVE_ACPI_APEI=y
-CONFIG_HAVE_ACPI_APEI_NMI=y
-CONFIG_THERMAL=y
-CONFIG_THERMAL_DEFAULT_GOV_STEP_WISE=y
-CONFIG_THERMAL_GOV_STEP_WISE=y
-CONFIG_X86_ACPI_CPUFREQ=y
-CONFIG_X86_ACPI_CPUFREQ_CPB=y
-CONFIG_X86_THERMAL_VECTOR=y
-{% endhighlight %}
-
-选择 x86_64 配置，设定好其他的东西之后把这些粘贴到最后，编译即可。
+参考 [https://gist.github.com/huming2207/47b17be9f27eb4b4e908801e31bfa4fe](https://gist.github.com/huming2207/47b17be9f27eb4b4e908801e31bfa4fe)，替换掉 target/linux/x86/config-3.18，重新编译即可。
 
 效果还是相当明显的。之前从电源指示灯上就能看出运行功耗非常高，而且散热片十分烫手。之后运行功耗大致和 WES7 持平，散热片还要更凉一些。
 
