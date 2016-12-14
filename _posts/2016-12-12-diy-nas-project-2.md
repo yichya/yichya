@@ -3,7 +3,9 @@ layout: post
 title: DIY NAS Project (2) Docker and ownCloud
 ---
 
-十月份开始沉迷没有 SSR 的辣鸡游戏 :) 加上 Umefit 还有架构师考试以及一大堆上机和大作业啥的，神烦。当然，忙里偷闲还是把这个坑填了。
+十月份开始沉迷没有 SSR 的辣鸡游戏 :) 
+
+加上 Umefit 还有架构师考试以及一大堆上机和大作业啥的，神烦。当然，忙里偷闲还是把这个坑填了。
 
 # Intro
 
