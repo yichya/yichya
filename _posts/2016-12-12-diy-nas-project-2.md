@@ -13,7 +13,7 @@ title: DIY NAS Project (2) Docker and ownCloud
 
 花了挺长时间才搞定了 Docker，然后在双十二当天晚上用 Docker 非常愉快的部署了 ownCloud，顺便做了一下 ngrok 的内网穿透。
 
-现在基本可以稳定使用，除了腾讯云上反向代理用的 nginx 似乎偶尔会抽风之外。另外，由于 Docker 对 iptables 做了很多工作，路由器上的透明代理似乎出了问题，之后有时间我会再处理。
+现在基本可以稳定使用，除了腾讯云上反向代理用的 nginx 似乎偶尔会抽风之外。
 
 另外停电已有两个多月。停电前我换了新的、容量大了很多的电池，目前基本可以毫无顾忌的让 NAS 彻夜运行。后面会稍微提到一点新的供电设计相关的内容。
 
@@ -69,6 +69,13 @@ CONFIG_X86_DECODER_SELFTEST=y
 
 保存即可。
 
+简单解释一下：
+
+* 缺少 madvice 的话，在启动 dockerd 的时候就会提示 madvice: Function not implemented 然后 dockerd 直接退出。
+* KEYS 即 /proc/keys，缺少的表现与上面类似。
+* ACL 和 SECURITY 相关的选项目前不确定，libcontainer 源代码中有使用相关的调用，而且如果不添加相关选项的话第一次启动 docker 可能可用，重启系统再打开 docker 一定会提示一个原因不明的 Operation not supported。
+* X86_DECODER_SELFTEST 与 Docker 没什么关系，不加的话在 make 的时候会要求手动选择这一项，选什么好像对最后结果也没什么影响。
+
 ## Add necessary functions to kernel
 
 回到源代码根目录，运行 make menuconfig。
@@ -109,7 +116,7 @@ Docker 对 iptables 的如此充分利用是我完全没想到的，在这里花
 
 ## Add Utilities
 
-最后按照 Docker 官方的说明，还需要添加几个工具。
+按照 Docker 官方的说明，还需要添加几个工具。
 
 进入 Utilities，选中：
 
@@ -121,7 +128,7 @@ Docker 对 iptables 的如此充分利用是我完全没想到的，在这里花
 回到首页，在 Root Filesystems 中：
 
 * 选择只生成 ext4 格式的映像。在 / 上使用 jffs2 等其他的文件系统可能会遇到 overlay 文件系统不能正常工作导致 Docker 无法创建容器的问题，不过我还没有尝试过。
-* 不要为 / 预留少于 150MB 的空间，但同样不建议过大，因为 Docker 的工作目录必须放在其他的分区中。
+* 不要为 / 预留少于 150MB 的空间，但同样不建议过大，因为 Docker 的工作目录必须放在其他的分区中，后面会提到原因。
 
 另外强烈建议选中 Base System 中的 udev 和 ca-certificates。缺少 ca-certificates 意味着几乎无法使用 docker pull。
 
@@ -143,31 +150,54 @@ Docker 对 iptables 的如此充分利用是我完全没想到的，在这里花
 
 配置挂载点，将 /dev/sdb3 挂载到 /var/lib/docker 即可。
 
-如果不这么做而是使用一个较大的 / 分区的话，试图启动容器时会提示因为 Docker 的工作目录是一个符号链接（OpenWrt 中 /var 是到 /tmp 的符号链接）导致启动失败。需要注意的是，由于 OpenWrt 的 mount-root 实现未考虑到这种需求，如果手动建立 /var 目录的话系统将无法启动。
+如果不这么做的话：
+
+* OpenWrt 中 /var 是到 /tmp 的符号链接，/tmp 是 tmpfs（shm）。即使不考虑容量、易失性等问题，试图启动容器时会提示“Docker 的工作目录是一个符号链接”，启动失败。
+* 尝试过使用一个较大的 / 分区，新建了一个 opt 目录并 mount -o bind /opt /var/lib/docker。启动容器的时候提示 Operation not supported，原因目前未知，可能与访问控制等相关。
+
+需要注意的是，如果手动建立 /var 目录的话，由于 OpenWrt 的 mount-root 实现未考虑到这种需求，系统启动时会在 preinit 阶段卡死。
 
 ## Autostart dockerd at startup
 
 在 luci 的 system -> startup 下面修改 /etc/rc.local 的地方添加自动启动 dockerd 的命令即可：
 
 {% highlight bash %}
-start-stop-daemon -S -b -x dockerd
+start-stop-daemon -b -x dockerd -S -- --registry-mirror=https://docker.mirrors.ustc.edu.cn
 {% endhighlight %}
 
+顺便推荐一下 ustc 的 Docker Hub Mirror，还是挺好用的。
+
 ## Enjoy!
+
+重新启动 NAS 就可以正常使用了。
 
 ![](../assets/images/diy-nas-project-2/docker-running.png)
 
 ## Troubleshooting
 
-如果遇到无法处理的错误的话，可以尝试使用我的 .config 和 config-3.18。下面是链接。
+如果遇到无法处理的错误的话，可以联系我索取我的 .config 和 config-3.18。
 
 # ownCloud Howto
 
 既然有了 Docker，ownCloud 基本上就没什么难度了。
 
-## Basic Installation
+## Installation
 
-直接 pull。
+之前没有用 mysql，直接放了一个 sqlite 数据库在机械硬盘上，于是我的机械硬盘工作时间大大增加（毕竟一言不合就 sync）。因为只有一块数据盘没法组 RAID，还是需要尽可能给它续命的。
+
+先 pull 一个 mysql。
+
+{% highlight bash %}
+docker pull mysql
+{% endhighlight %}
+
+创建容器的时候分一个名字给它，并指定 root 用户的密码。另外有需求的话可以在这里用 -v 参数把 /var/lib/mysql 放在容器外存储。
+
+{% highlight bash %}
+docker run -d --name mysql -e MYSQL_ROOT_PASSWORD=my-secret-pw mysql
+{% endhighlight %}
+
+然后 pull 一下 owncloud。
 
 {% highlight bash %}
 docker pull owncloud
@@ -176,20 +206,34 @@ docker pull owncloud
 在机械硬盘上创建好 ownCloud 的工作目录，创建容器的时候用 -v 参数指定就可以了。同时记得将 80 端口映射出来。
 
 {% highlight bash %}
-docker run -d -v /mnt/sda1/owncloud:/var/www/html -p 8000:80 owncloud
+docker run -d -v /mnt/sda1/owncloud:/var/www/html/data -p 8000:80 --link mysql:mysql owncloud
 {% endhighlight %}
 
-打开 192.168.1.1:8000，设置好 ownCloud 即可。
+打开 192.168.1.1:8000，使用 MySQL/MariaDB 数据库连接，用 root 用户和上面指定的密码设置好 ownCloud 即可。
 
 ![](../assets/images/diy-nas-project-2/owncloud.png)
 
+## Cron
+
+ownCloud 要求执行定时任务，由于容器中没有带 systemd 这样的 init 程序，我们需要手动处理。
+
+在 ownCloud 的管理页面将计划任务设置为 WebCron。
+
+![](../assets/images/diy-nas-project-2/owncloud-cron.png)
+
+在 luci 的 system -> scheduled tasks 中加一条 cron：
+
+{% highlight cron %}
+*/15 * * * * curl localhost:8000/cron.php
+{% endhighlight %}
+
+时间可以自己定，我这里以 15 分钟为例，实际使用中我设置为了每小时一次。
+
 ## Recommended Optimizations
 
-直接这样部署的话 ownCloud 默认使用 sqlite 数据库存储 metadata。这样机械硬盘的压力会比较大，建议采取在 ssd 上部署 mysql 数据库并与 ownCloud 链接的方法。
+如果对性能有更高要求还可以安装 memcached 等缓存。对安全性有要求的话也可以自己签 https 证书。
 
-如果对性能有更高要求还可以安装 memcached 等。
-
-这些可选优化在网上有很多教程，这里就不赘述了。*其实是因为我还没来得及做……*
+这些可选优化在网上有很多教程，这里就不赘述了。
 
 # ngrok
 
@@ -227,7 +271,7 @@ nohup ngrokd -tlsKey=server.key -tlsCrt=server.crt -domain="ngrok.yichyaqc.cn" -
 
 ## Client Configuration
 
-OpenWrt 上的 ngrokc 客户端可能不太好找，我找了几个都不能用。能用的可以在这里下载。下载后放到 /usr/bin 即可。
+OpenWrt 上的 ngrokc 客户端可能不太好找，我找了几个都不能用。能用的可以在[这里](../assets/files/diy-nas-project-2/ngrokc)下载。下载后放到 /usr/bin 即可。
 
 配套的 luci 插件倒是不难找。平台无关，直接传到 NAS 上 opkg install 即可。不过 luci 插件似乎有 bug，还是需要我们手动修改 /etc/config/ngrok。
 
