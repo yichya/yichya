@@ -223,9 +223,9 @@ ownCloud 要求执行定时任务，由于容器中没有带 systemd 这样的 i
 
 在 luci 的 system -> scheduled tasks 中加一条 cron：
 
-{% highlight crontabs %}
+```
 */15 * * * * curl localhost:8000/cron.php
-{% endhighlight %}
+```
 
 时间可以自己定，我这里以 15 分钟为例，实际使用中我设置为了每小时一次。
 
