@@ -19,6 +19,8 @@ title: Card Pick Simulater Based on Nameko & RabbitMQ
 
 [这里](https://coding.net/u/yichya/p/nameko-cardpick/git)是项目的仓库首页。
 
+<!-- more -->
+
 # Nameko
 
 [https://github.com/nameko/nameko](https://github.com/nameko/nameko)
