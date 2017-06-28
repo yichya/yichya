@@ -7,7 +7,6 @@ title: About My First Half of 2016
 
 曲折的半年，蜕变的半年。
 
-
 # Overview 
 
 这半年来： 
