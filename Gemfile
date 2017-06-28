@@ -1,8 +1,5 @@
-source 'https://rubygems.org'
+source "https://rubygems.org"
 
-gem 'jekyll'
-gem 'sass'
-gem 'octopress', '~> 3.0.0.rc.12'
+gem 'octopress'
 gem 'jekyll-paginate'
-gem 'jekyll-sitemap'
-gem 'pygments.rb', '~> 1.0'
+gem 'neo-hpstr-jekyll-theme'

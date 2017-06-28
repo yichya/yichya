@@ -67,17 +67,31 @@ $(document).ready(function(){
   $("#menu").mmenu({
     "extensions": [
       "border-full",
+      "effect-zoom-menu",
+      "effect-zoom-panels",
+      "pageshadow",
       "theme-dark"
     ],
     "counters": true,
+    "navbars": [
+      {
+        "position": "bottom",
+        "content": [
+          "<a class='fa fa-search' href='/search'></a>",
+          "<a class='fa fa-envelope' href='#/'></a>",
+          "<a class='fa fa-twitter' href='#/'></a>",
+          "<a class='fa fa-facebook' href='#/'></a>"
+        ]
+      }
+    ]
   });
 });
 
-//sharing
-// $(document).ready(function(){
-//   $("body").floatingSocialShare({
-//     buttons: ["facebook","twitter","google-plus", "linkedin", "pinterest"],
-//     text: "Share with "
-//   });
-// });
-
+var sharing = function(){
+    $(document).ready(function(){
+      $("body").floatingSocialShare({
+        buttons: ["facebook","twitter","google-plus", "linkedin", "pinterest"],
+        text: "Share with "
+      });
+    });
+};//sharing

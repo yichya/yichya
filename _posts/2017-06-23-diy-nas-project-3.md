@@ -9,6 +9,8 @@ title:  DIY NAS Project (3) Hardware Upgrade & Disaster
 
 然后我就突然发现了这个。
 
+<!-- more -->
+
 ![](../assets/images/diy-nas-project-3/IMG_1105.JPG)
 
 ![](../assets/images/diy-nas-project-3/IMG_1106.JPG)
