@@ -3,7 +3,7 @@ layout: post
 title:  DIY NAS Project (4) Virtualization Practice
 ---
 
-这篇想谈一谈最近自己在虚拟化上面的一些实践。主要内容包括：
+这篇想谈一谈最近自己在虚拟化上面的一些实践。
 
 * 需要解决的问题
     * 集成显卡
@@ -94,24 +94,54 @@ title:  DIY NAS Project (4) Virtualization Practice
 
 对于存储相关的设备，性能相关的部分与有线网卡类似（可以参考 Hyper-V 支持 NVMe 相关的文档）。除此之外，直接对 ATA 设备的管理（电源管理、SMART 数据监测）甚至是磁盘控制器的管理（比如阵列的管理）都是选用直通这一方案的重要收益。
 
-# 草民的虚拟化实践
-
-草民的尝试中包括了 VMWare ESXi、Ubuntu 17.04 上的 KVM 以及 Windows Server 2016 上的 Hyper-V。这三种 Hypervisor 在草民的平台上都能够支持 PCI 设备的直通，不过实际的尝试中出现了各种各样的问题，最终只有 KVM 一种方案能比较完美的使用。至于为什么出现问题，在解释之前还需要介绍一下草民对虚拟化相关技术的理解。
-
-## 关于虚拟化的分类
+# 虚拟化相关技术简介
 
 虚拟化技术按照 Hypervisor 的类型可以分为 Type-I 和 Type-II 两种，按照对硬件的模拟的类型可以分为 Full Virtualization 和 Paravirtualization 两种。不过对于 Type-I 和 Type-II，其实并没有非常严格的界限。
 
-* Type-I 与 Type-II
+## Type-I 与 Type-II
 
 Type-I 的 Hypervisor 本身就是运行在硬件上的 Host OS；Type-II 的 Hypervisor 是 OS 上的一个应用程序。我们用到的 ESXi 属于典型的 Type-I 的 Hypervisor，普通的 QEMU 算是典型的 Type-II Hypervisor。
 
 而我们常用的 QEMU-KVM 就不能明确的划归 Type-I 和 Type-II。KVM 通过在内核中添加模块，实现了高效率的虚拟化，但是用户看到的仍然是用户空间中的 QEMU-KVM；Hyper-V 在 Wikipedia 上被划分为 Type-I 型，应该是 NT 内核初始化之前先由 Hyper-V 接管了部分 CPU 控制权限。
 
-* Full Virtualization 与 Paravirtualization
+## Full Virtualization 与 Paravirtualization
 
 Full Virtualization 模拟真实的硬件环境，使得 Guest OS 可以不做修改就运行在 VM 中；Paravirtualization 则并不模拟完整的硬件环境，只是提供一些 API 供 Guest OS 实现虚拟化功能，也就是说 Guest OS 需要针对 Hypervisor 进行修改才能运行在 VM 中。
 
 Linux 内核提供了针对 Xen 和 KVM 等 Hypervisor 的 Paravirtualization 支持，内核启动时可以自动识别自己运行的环境，以适应对应的虚拟化 API。对于 Hyper-V 等 Linux 没有直接支持 Paravirtualization 的 Hypervisor，内核会以在普通硬件上工作的方式在 VM 中运行（但是这种情况下内核能够识别出 Hyper-V Hypervisor）。
 
-##
+# 草民的虚拟化实践
+
+草民的尝试中包括了 VMWare ESXi、Ubuntu 17.04 上的 KVM 以及 Windows Server 2016 上的 Hyper-V。这三种 Hypervisor 在草民的平台上都能够支持 PCI 设备的直通，不过实际的尝试中出现了各种各样的问题，最终只有 KVM 一种方案能比较完美的使用。
+
+## 定制 OpenWRT（LEDE）
+
+默认的 OpenWRT 或者 LEDE 只能比较好的支持某一种 Hypervisor。为此，我们需要修改默认的内核配置，添加那些用于支持各种 Hypervisor 的特性。
+
+Linux 目前自带 Xen、KVM、Hyper-V 和 VMWare 相关的一些特性支持。主要包括：
+
+* 基本的 Guest 支持
+    * Paravirtualization 支持
+    * 针对 KVM、Xen 的 Guest 支持
+* Balloon（动态内存分配）驱动程序
+* Virtio（IO 半虚拟化）驱动程序
+    * SCSI 设备
+    * 网络设备
+* 虚拟显示设备支持
+    * Framebuffer
+    * DRM（不是数字版权保护那个）
+* PCI ／ PCI-E 通道驱动程序
+* 用于与 Host 通信的虚拟管道设备
+* 其他的虚拟设备，如键盘鼠标等
+
+我们在定制 Guest OS 的时候，基本的 Guest 支持以及 Paravirtualization 支持肯定是需要添加进去的，否则无法享受半虚拟化特性带来的性能提升；对于 IO 等设备，Virtio 提供的半虚拟化支持对性能提升也有很大的帮助；至于虚拟的显示设备则可有可无。直通 PCI-E 设备肯定也需要 PCI-E 通道的驱动程序（草民的尝试中就是因为 LEDE 不能顺利支持 Hyper-V 的虚拟 PCI-E 设备导致最终放弃使用 Hyper-V，但是 Xubuntu 就能很顺利的使用 Hyper-V 直通无线网卡）。
+
+考虑到 Hyper-V 支持 PCI-E 直通的特性是 4.6 内核才加入的，我们可选的似乎只有 LEDE 开发分支（虽然事实证明并没有什么卵用），草民也就用 LEDE 开发分支了。先准备好 LEDE Buildroot 环境，并且配置 target 为 x86-64，保存回到命令行后执行 `make kernel_menuconfig` 即可进入 Linux 内核配置界面。
+
+![](../assets/images/diy-nas-project-4/kernel_menuconfig.png)
+
+可以通过分别搜索 `vmware`、`hyperv`、`virtio`、`kvm` 这些关键字找到内核中相关特性的配置，全部打开并且保存即可。关于 KVM，作为 Host 提供的那一些特性是不需要的，忽略即可。
+
+![](../assets/images/diy-nas-project-4/kernel_menuconfig_virtio.png)
+
+遇到某些选项无法打开的时候，将依赖项全部选中后再尝试即可。完成后保存并重新构建 LEDE，我们就得到了适合各种 Hypervisor 的 LEDE。
