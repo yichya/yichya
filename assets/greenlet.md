@@ -35,7 +35,7 @@ ref:
 
 Greenlet 是 Python 世界中比较典型的一个协程实现。
 
-```
+```py
 from greenlet import greenlet
 
 def test1():
@@ -72,7 +72,7 @@ print "end"
 
 Greenlet 结构体中保存了这些信息：
 
-```
+```c
 typedef struct _greenlet {
 	PyObject_HEAD 					// PyObject 公共数据
 
@@ -124,7 +124,7 @@ typedef struct _greenlet {
 
 手动指定父子关系可以这样：
 
-```
+```py
 from greenlet import greenlet
  
 def test1():
@@ -159,7 +159,7 @@ print 78
 
 switch 函数可以接收参数，并用在 Greenlet 初始化或者是返回值中。
 
-```
+```py
 from greenlet import greenlet
  
 def test1():
