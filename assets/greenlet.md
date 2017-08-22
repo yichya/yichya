@@ -5,7 +5,7 @@
 * 协程核心：Greenlet
 * gevent.core 与事件模型：libev
 * 调度核心：gevent.hub
-* 其他的一些组件
+* 典型应用：gevent.socket
 
 ref:
 
@@ -152,7 +152,7 @@ print 78
 
 基于 yield 实现的协程往往只能切换回自己的直接或间接调用者，要想在嵌套的调用中切换出去是比较麻烦的。本质上是因为 yield 只能保留栈顶的帧，Python3 对此有改进，可以通过 yield from 嵌套的挂起内层过程调用，但依然不能任意的切换到其他上下文。
 
-而 Greenlet 就可以，只要一个过程被封装进一个 Greenlet，可以认为这个 Greenlet 就成了一个可以随时挂起和恢复的实体。这个过程中不仅仅有 Python vm 的 top frame，同时更多的存储在栈上的信息都会被复制到堆中供后续使用。*Todo 举个例子*
+而 Greenlet 就可以，只要一个过程被封装进一个 Greenlet，可以认为这个 Greenlet 就成了一个可以随时挂起和恢复的实体。这个过程中不仅仅有 Python vm 的 top frame，同时更多的存储在栈上的信息都会被复制到堆中供后续使用。
 
 
 ## Greenlet 之间传递消息
@@ -176,4 +176,3 @@ gr1 = greenlet(test1)
 gr2 = greenlet(test2)
 gr1.switch()
 ```
-

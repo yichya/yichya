@@ -1,11 +1,11 @@
-# Gevent 分享 （3） Gevent 的调度核心：Hub 
+# Gevent 分享 （3） 调度核心：gevent.hub 
 
 目录：
 
 * 协程核心：Greenlet
 * gevent.core 与事件模型 libev
 * 调度核心：gevent.hub 
-* 其他的一些组件
+* 典型应用：gevent.socket
 
 ref:
 
@@ -98,6 +98,22 @@ Waiter 可以暂存一个 Value 值，等待 Hub 将其取出并发送到正确�
 
 ## Hub
 
+hub 是一个单例，从 get_hub() 的源码就可以看出来：
+
+```py
+import _thread
+_threadlocal = _thread._local()
+
+def get_hub(*args, **kwargs):
+    global _threadlocal
+    try:
+        return _threadlocal.hub
+    except AttributeError:
+        hubtype = get_hub_class()
+        hub = _threadlocal.hub = hubtype(*args, **kwargs)
+        return hub
+```
+
 为了方便介绍，下面给出 Hub 类的一个典型使用场景，下面的代码只摘取了关键部分：
 
 ```py
@@ -107,7 +123,7 @@ Waiter 可以暂存一个 Value 值，等待 Hub 将其取出并发送到正确�
 self._read_event = io(fileno, 1)
 ##############################################
 # fileobject.py 中:
-# IO 完成后阻塞，将当前 greenlet 切换到 main hub
+# IO 完成后阻塞，将当前 greenlet 切换到 hub
 # 让出控制权
 # 等到感兴趣的 IO 事件发生后
 # hub 会切换到这个点，继续执行
@@ -136,9 +152,9 @@ self.hub.wait(self._read_event)
             finally:
                 self.greenlet = None
 ##############################################
-Hub:
-hub.switch函数:
-        # 切换到 main hub
+# Hub:
+# hub.switch 函数:
+        # 切换到 hub
         return greenlet.switch(self)
 ```
 
@@ -148,13 +164,13 @@ hub.switch函数:
 
 下面做简要分析：
 
-当 IO 完成并发生阻塞事件时，为了能异步的得到事件通知，调用 `self.hub.wait(self._read_event)` 将 watcher 加入到 libev 的 loop 循环中。调用 `hub.wait` 方法后，会从当前 greenlet 切换到 hub。由于hub管理着所有的greenlet，并将这些 greenlet 和 libev 的 loop 关联起来。这是通过 libev 的 watcher 来关联的。在 hub.wait 中，启动一个 Waiter， 并将 waiter.switch 这个回调函数和 watcher 关联起来。最后执行 wait.get 将当前 greenlet 切换到 Hub。这时 libev 如果检测到发生了 greenlet 感兴趣的事件（前面讲过的 `epoll_wait()` 与回调），就会从 Hub 切换到刚才被挂起的 greenlet，并从挂起处继续执行。
+当 IO 完成并发生阻塞事件时，为了能异步的得到事件通知，调用 `self.hub.wait(self._read_event)` 将 watcher 加入到 libev 的 loop 循环中。调用 `hub.wait` 方法后，会从当前 greenlet 切换到 hub。hub 管理着所有的 greenlet，并将这些 greenlet 和 libev 的 loop 关联起来。这是通过 libev 的 watcher 来关联的。在 hub.wait 中，启动一个 Waiter， 并将 waiter.switch 这个回调函数和 watcher 关联起来。最后执行 `waiter.get` 将当前 greenlet 切换到 Hub。这时 libev 如果检测到发生了 greenlet 感兴趣的事件（前面讲过的 `epoll_wait()` 与回调），就会从 Hub 切换到刚才被挂起的 greenlet，并从挂起处继续执行。
 
 ### `init`
 
 `__init__ ` 函数的功能是初始化设置 `loop` 类，并初始化：
 
-```
+```py
 loop_class = config('gevent.core.loop', 'GEVENT_LOOP')
 ...
 self.loop = loop_class(flags=loop, default=default)
@@ -166,8 +182,8 @@ self.loop = loop_class(flags=loop, default=default)
 
 ```py
 def wait(self, watcher):
-    waiter = Waiter()       # 创建 Waiter 类实例
-    unique = object()       # object() 是一个唯一的对象，作为从 main greenlet 返回时的跟踪对象
+    waiter = Waiter()         # 创建 Waiter 类实例
+    unique = object()         # object() 是一个唯一的对象，作为从 main greenlet 返回时的跟踪对象
     watcher.start(waiter.switch, unique) # 将 waiter.switch 这个 callback 附加到 watcher 上，参数为 unique
     try:
         result = waiter.get() # 执行 waiter.get 从当前 greenlet 切换到 main greenlet
@@ -176,6 +192,11 @@ def wait(self, watcher):
     finally:    
         watcher.stop()
 ```
+
+wait 方法的作用是挂起当前的协程，直到 watcher 监听的事件就绪。它创建一个 Waiter 实例 waiter，接着将 waiter 的 `switch` 方法注册到 watcher 上。这样当 watcher 监听的事件就绪后就会调用实例的 `switch` 方法，接着就调用 waiter 的 `get` 方法, 根据 watcher 监听的事件就绪的快慢，这里有两种可能：
+
+* `get` 在 `switch` 之前运行：get 会设置 waiter 的 greenlet 属性为当前执行的协程，接着切换到 hub，当将来某个时候事件就绪，那么调用 waiter 的 switch，switch 会调用 greenlet 属性的 switch 方法，这样就切换回了当前运行的协程。
+* `get` 在 `switch` 之后运行: 这种情况比较少见，可是也是存在的，这种情况下运行 switch 时，waiter 对象的 greenlet 属性为None, 所以 switch 方法只是简单的设置 waiter 的 value 属性，接着调用 get 会直接返回 value 属性，而不阻塞。
 
 ### switch
 
@@ -232,7 +253,7 @@ def run(self):
 
 ## Gevent 对 Greenlet 的扩展
 
-前面对 Greenlet 的介绍中我们知道，Greenlet 启动的时候会有一个 main Greenlet 作为所有 Greenlet 的 root。对于 Gevent，我们知道 Hub 承担了在所有 Greenlet 之间轮转的任务。
+前面对 Greenlet 的介绍中我们知道，Greenlet 启动的时候会有一个 main Greenlet 作为所有 Greenlet 的 root。对于 Gevent，我们知道 Hub 承担了在所有 Greenlet 之间轮转的任务。为了把所有 Greenlet 默认的 Parent 从 main Greenlet 改为 Hub 并且正确完成调度，Gevent 在这里做了一些简单的工作。
 
 ### spawn
 
