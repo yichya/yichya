@@ -1,6 +1,14 @@
 ---
 layout: post
 title: Card Pick Simulater Based on Nameko & RabbitMQ
+categories:
+  - Large Things
+tags:
+  - gevent
+  - python
+  - libev
+  - nameko
+  - microservice
 ---
 
 寒假里面，过年前一天抽到了花鸟卷，几天之后又抽到了青行灯，加上去年最后一天抽到的酒吞，勉强算是脱非了吧 23333

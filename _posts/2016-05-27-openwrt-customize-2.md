@@ -1,6 +1,12 @@
 ---
 layout: post
 title: 定制 OpenWrt 固件 (2) BuildRoot
+categories:
+  - Small Things
+tags:
+  - openwrt
+  - lede
+  - router
 ---
 
 上一次似乎说想用 MT7620A 的路由器来演示更进一步的 ImageBuilder 用法。不过呢，我改主意了。虽然我现在手里有三个 MT7620A 的路由器吧。

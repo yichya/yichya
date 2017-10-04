@@ -1,6 +1,11 @@
 ---
 layout: post
 title: Doufm for Raspberry Pi (v3)
+categories:
+  - Small Things
+tags:
+  - raspberrypi
+  - python
 ---
 这次折腾的实在是太曲折了。本来觉得不会遇到什么坑，最多难搞，结果遇到了好多好多完全想不到的问题，换了好多种解决方案，最后终于成功。在这里不能全部记录，其实挺遗憾的 :)
 

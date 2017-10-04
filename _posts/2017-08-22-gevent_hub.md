@@ -1,6 +1,12 @@
 ---
 layout: post
 title:  Gevent（3）调度核心：gevent.hub 
+categories:
+  - Large Things
+tags:
+  - gevent
+  - python
+  - libev
 ---
 
 目录：

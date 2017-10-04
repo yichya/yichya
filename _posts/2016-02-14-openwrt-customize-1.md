@@ -1,6 +1,12 @@
 ---
 layout: post
 title: 定制 OpenWrt 固件 (1) 透明代理
+categories:
+  - Small Things
+tags:
+  - openwrt
+  - lede
+  - router
 ---
 
 一年一度虐狗节 :) 今年谁这么无聊，你给我出来，我保证不打死你 :)

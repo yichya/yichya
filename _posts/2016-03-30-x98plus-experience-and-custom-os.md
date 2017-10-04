@@ -1,6 +1,10 @@
 ---
 layout: post
 title: 台电 X98Plus 体验 + 系统定制
+categories:
+  - Small Things
+tags:
+  - gadget
 ---
 
 在草民的影响下【雾】，常来贵协的五位强者都购买了 Windows 系统的平板用于打发无聊的上课时间。加上草民室友的一台，草民总共把六个人带进坑了 23333

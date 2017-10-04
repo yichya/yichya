@@ -1,6 +1,12 @@
 ---
 layout: post
 title:  Gevent（2）gevent.core 与事件模型 libev
+categories:
+  - Large Things
+tags:
+  - gevent
+  - python
+  - libev
 ---
 
 目录：

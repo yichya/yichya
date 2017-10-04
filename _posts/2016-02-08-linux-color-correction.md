@@ -1,6 +1,10 @@
 ---
 layout: post
 title: Linux 下的屏幕颜色校正
+categories:
+  - Small Things
+tags:
+  - redshift
 ---
 
 Asus 的渣笔记本渣屏幕，简直让人心累……虽然 Asus 自带一个叫 Splendid Utility 的工具，可以对屏幕颜色进行一些优化，但是……优化过之后严重损失细节……而且，默认状态下，比起联想笔记本的屏幕，色偏严重，整个屏幕泛着幽幽的蓝光。另外，读文本时，文字的锐利度也不够。

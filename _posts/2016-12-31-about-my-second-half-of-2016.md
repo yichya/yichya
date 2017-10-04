@@ -1,6 +1,10 @@
 ---
 layout: post
 title: About My Second Half of 2016
+categories:
+  - Life
+tags:
+  - life
 ---
 
 按照计划，半年一次记录。

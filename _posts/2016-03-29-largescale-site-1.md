@@ -1,6 +1,10 @@
 ---
 layout: post
 title: 大型网站架构设计实践（1）前言
+categories:
+  - Large Things
+tags:
+  - microservice
 ---
 
 正式参加 Extalk 项目后端工作到现在已经有一个月了。这一个月学习的网站架构相关的知识确实足够多，可能我要用几年的实践才能完全消化。

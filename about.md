@@ -1,10 +1,8 @@
 ---
 layout: page
 title: About
-share: true
+sidebar_link: true
 ---
-
-# About Myself
 
 ## Overview
 

@@ -1,6 +1,14 @@
 ---
 layout: post
 title:  DIY NAS Project (3) Hardware Upgrade & Disaster
+categories:
+  - Small Things
+tags:
+  - openwrt
+  - lede
+  - nas
+  - router
+  - hardware
 ---
 
 自从三月份过了面试之后，除去被拽回来之前工作的几天，剩下的时间基本上都是一条大咸鱼，基本上除了 Umefit 日常之外就只做一做 OpenWRT 的定制。六月份更是干脆辞掉了 Umefit 的工作，安安心心的享受剩下的一个来月的闲暇时光。

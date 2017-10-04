@@ -1,6 +1,14 @@
 ---
 layout: post
 title:  DIY NAS Project (4) Virtualization Practice
+categories:
+  - Small Things
+tags:
+  - openwrt
+  - lede
+  - nas
+  - router
+  - virtualization
 ---
 
 这次对硬件的更新，除了考虑到原来的那块主板的 CPU 性能和网卡的数量之外，更多的还是包括想让这台设备拥有更加丰富的功能，尤其是狗东 618 买了投影之后，更主要的目的也包括让这台设备能够承担一些 HTPC 相关的工作。

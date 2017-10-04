@@ -1,6 +1,13 @@
 ---
 layout: post
 title: DIY NAS Project (2) Docker and ownCloud
+categories:
+  - Small Things
+tags:
+  - openwrt
+  - lede
+  - nas
+  - router
 ---
 
 十月份开始沉迷没有 SSR 的辣鸡游戏 :) 

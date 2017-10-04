@@ -1,6 +1,14 @@
 ---
 layout: post
 title: DIY NAS Project (1) Hardware and OpenWRT
+categories:
+  - Small Things
+tags:
+  - openwrt
+  - lede
+  - nas
+  - router
+  - hardware
 ---
 
 先扯点儿题外的。

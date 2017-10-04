@@ -1,6 +1,10 @@
 ---
 layout: post
 title: About My First Half of 2017
+categories:
+  - Life
+tags:
+  - life
 ---
 
 按照计划，半年一次记录。 
