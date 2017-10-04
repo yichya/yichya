@@ -41,7 +41,7 @@ title:  DIY NAS Project (4) Virtualization Practice
 * 存储相关功能最好可以用 DSM，如果 Host OS 功能足够强大（比如使用了 Windows 10 + Hyper-V 这种方案）的话，也可以考虑不单独用 VM 来做，直接由 Host OS 来管理
 * HTPC 相关的功能就需要一个普通的 Windows 或者带 X 的 Linux，而且需要能够控制集成显卡（声卡可以使用 HDMI 音频完成，板载的声卡可以用也可以不用）
 
-问题显得还是有些棘手：每一个需求都几乎需要一个单独的操作系统来运行，如果硬件上直接跑的系统自身的功能太弱的话，所有的操作都需要一个 VM 来跑。而且每一项功能的实现都需要 Host OS 或者 VM 都需要独占一个或多个硬件设备（比如路由的功能，除去无线网卡之外还需要能够控制有线网卡）；而如果存储部分不由 Host OS 管理的话，情况还可能会更加复杂一些。
+问题显得还是有些棘手：每一个需求都几乎需要一个单独的操作系统来运行，如果硬件上直接跑的系统自身的功能太弱的话，所有的操作都需要一个 VM 来跑。而且每一项功能的实现都需要 Host OS 或者 VM 独占一个或多个硬件设备（比如路由的功能，除去无线网卡之外还需要能够控制有线网卡）；而如果存储部分不由 Host OS 管理的话，情况还可能会更加复杂一些。
 
 ## 关于无线网卡
 
@@ -49,7 +49,7 @@ title:  DIY NAS Project (4) Virtualization Practice
 
 对于有线网卡，基本上所有的 Hypervisor 都会包含功能全面的网络配置组件，能够实现虚拟交换机的创建、虚拟网卡与物理网卡的桥接等，并且也有很多种可选的优化帮助性能上的提升，基本上不需要我们过于操心如何直接控制硬件。但是对于无线网卡来说，由于 Hypervisor 几乎都不包括无线网卡支持，能直接包括 AP 支持的更是闻所未闻，因此无线网卡的支持基本上只能通过将控制权直接传递给 VM 这种方案，也就是所谓的直通（Passthrough）来完成。
 
-常见的 Hypervisor 在 CPU 支持一些虚拟化特性（包括 VT-x、VT-d，Hyper-V 还要求 SR-IOV）的前提下都可以实现常见 PCIE 设备的直通。MSDN 的文档上面提到目前 Hyper-V 能够直接支持的设备包括 NVMe 存储设备和显卡（AMD 据说大多数支持，NVIDIA 似乎只有部分 Quadro 专业卡或者或者 Tesla 计算卡能得到较好支持）。至于我们这次要直通的无线网卡，在 Windows 下配置直通的时候会被识别为未知 PCIE 设备，但是可以工作（虽然并不完全正常，后面会详谈）。KVM 和 ESXi 没有专门区分不同的 PCIE 设备，能不能通主要看脸（比如 ESXi 上面我就翻车了）。
+对于支持 MSI 的 PCI-E 设备来说，常见的 Hypervisor 在 CPU 支持一些虚拟化特性（包括 VT-x、VT-d，Hyper-V 还要求 SR-IOV）的前提下都可以实现常见 PCIE 设备的直通。MSDN 的文档上面提到目前 Hyper-V 能够直接支持的设备包括 NVMe 存储设备和显卡（AMD 据说大多数支持，NVIDIA 似乎只有部分 Quadro 专业卡或者或者 Tesla 计算卡能得到较好支持）。至于我们这次要直通的无线网卡，在 Windows 下配置直通的时候会被识别为未知 PCIE 设备，但是可以工作（虽然并不完全正常，后面会详谈）。KVM 和 ESXi 没有专门区分不同的 PCIE 设备，能不能通主要看脸（比如 ESXi 上面我就翻车了）。
 
 ## 关于集成显卡
 
@@ -111,6 +111,14 @@ Type-I 的 Hypervisor 本身就是运行在硬件上的 Host OS；Type-II 的 Hy
 Full Virtualization 模拟真实的硬件环境，使得 Guest OS 可以不做修改就运行在 VM 中；Paravirtualization 则并不模拟完整的硬件环境，只是提供一些 API 供 Guest OS 实现虚拟化功能，也就是说 Guest OS 需要针对 Hypervisor 进行修改才能运行在 VM 中。
 
 Linux 内核提供了针对 Xen 和 KVM 等 Hypervisor 的 Paravirtualization 支持，内核启动时可以自动识别自己运行的环境，以适应对应的虚拟化 API。对于 Hyper-V 等 Linux 没有直接支持 Paravirtualization 的 Hypervisor，内核会以在普通硬件上工作的方式在 VM 中运行（但是这种情况下内核能够识别出 Hyper-V Hypervisor）。
+
+## Memory-Mapped IO
+
+这个还是需要补充下的。
+
+## MSI
+
+同样需要补充。
 
 # 草民的虚拟化实践
 
