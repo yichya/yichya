@@ -3,7 +3,11 @@ layout: post
 title:  DIY NAS Project (4) Virtualization Practice
 ---
 
-这篇想谈一谈最近自己在虚拟化上面的一些实践。
+这次对硬件的更新，除了考虑到原来的那块主板的 CPU 性能和网卡的数量之外，更多的还是包括想让这台设备拥有更加丰富的功能，尤其是狗东 618 买了投影之后，更主要的目的也包括让这台设备能够承担一些 HTPC 相关的工作。
+
+这篇想谈一谈最近折腾 NAS 的过程中自己在虚拟化上面的一些实践。
+
+<!-- more -->
 
 * 需要解决的问题
     * 集成显卡
@@ -18,10 +22,10 @@ title:  DIY NAS Project (4) Virtualization Practice
     * 虚拟化的分类
         * Type I 与 Type II
         * Full Virtualization 与 Paravirtualization
-    * MMIO 与 IOMMU
-    * VT-d，VT-x
-    * SR-IOV
-        * Hyper-V 中 SR-IOV 发挥的作用
+<!--    * MMIO 与 IOMMU
+        * VT-d，VT-x
+        * SR-IOV
+            * Hyper-V 中 SR-IOV 发挥的作用 -->
 * 针对上述三种 Hypervisor 的实践
     * OpenWRT 的定制
         * Hyper-V 驱动的迷之 Bug？
@@ -31,9 +35,7 @@ title:  DIY NAS Project (4) Virtualization Practice
 
 # 需要解决的问题
 
-这次对硬件的更新，除了考虑到原来的那块主板的 CPU 性能和网卡的数量之外，更多的还是包括想让这台设备拥有更加丰富的功能，尤其是狗东 618 买了投影之后，更主要的目的也包括让这台设备能够承担一些 HTPC 相关的工作。
-
-这样，这台设备具备的功能基本上不可能用单独的一个操作系统来完成了：
+考虑上面提到的需求，这台设备具备的功能基本上不可能用单独的一个操作系统来完成了：
 
 * 路由相关的功能，考虑到我对透明代理的重度依赖以及自己的技能树，基本上还是考虑使用 OpenWRT 或者 LEDE，实在不能够满足的话也可以考虑用 RouterOS 提供 AP 服务，与 OpenWRT 结合运行
 * 存储相关功能最好可以用 DSM，如果 Host OS 功能足够强大（比如使用了 Windows 10 + Hyper-V 这种方案）的话，也可以考虑不单独用 VM 来做，直接由 Host OS 来管理
@@ -78,7 +80,11 @@ title:  DIY NAS Project (4) Virtualization Practice
 * 直通单个 ATA 设备，对于我们的平台来说是最好的选择。
 * 直通块设备及其以上的层次的话，通过 ATA 命令管理硬盘的需求肯定就不能实现了
 
-草民的实践中尝试了在 KVM 内直通 ATA 设备和直通块设备，但是发现两种方式似乎都是 QEMU 模拟了一个 ATA 设备，并没能达到我的预期效果，因此最终选择的方式还是由 Host OS 负责存储管理。
+草民的实践中尝试了在 KVM 内直通 ATA 设备和直通块设备，但是发现两种方式似乎都是 QEMU 模拟了一个 ATA 设备，并没能达到我的预期效果。
+
+【图】
+
+因此最终选择的方式还是由 Host OS 负责存储管理。
 
 ## 直通在这些设备上的意义
 
@@ -86,11 +92,7 @@ title:  DIY NAS Project (4) Virtualization Practice
 
 与显示设备类似，Host OS 不能提供直接支持的设备，比如无线网卡，只能通过直通的方式将控制权交由 VM 来利用这些设备。
 
-对于 Hypervisor 能直接支持的有线网络设备，直通能带来明显的性能提升：
-
-【图】
-
-数据显示，直通网络设备比起其他的半虚拟化（VirtIO）或者是通过虚拟网卡桥接等方式，性能最好且对系统资源的占用也最小。
+对于 Hypervisor 能直接支持的有线网络设备，直通能带来明显的性能提升。数据显示，直通网络设备比起其他的半虚拟化（VirtIO）或者是通过虚拟网卡桥接等方式，性能最好且对系统资源的占用也最小。
 
 对于存储相关的设备，性能相关的部分与有线网卡类似（可以参考 Hyper-V 支持 NVMe 相关的文档）。除此之外，直接对 ATA 设备的管理（电源管理、SMART 数据监测）甚至是磁盘控制器的管理（比如阵列的管理）都是选用直通这一方案的重要收益。
 
@@ -124,9 +126,10 @@ Linux 目前自带 Xen、KVM、Hyper-V 和 VMWare 相关的一些特性支持。
     * Paravirtualization 支持
     * 针对 KVM、Xen 的 Guest 支持
 * Balloon（动态内存分配）驱动程序
-* Virtio（IO 半虚拟化）驱动程序
+* IO 半虚拟化驱动程序
     * SCSI 设备
     * 网络设备
+    * 其他的一些设备
 * 虚拟显示设备支持
     * Framebuffer
     * DRM（不是数字版权保护那个）
@@ -140,8 +143,78 @@ Linux 目前自带 Xen、KVM、Hyper-V 和 VMWare 相关的一些特性支持。
 
 ![](../assets/images/diy-nas-project-4/kernel_menuconfig.png)
 
-可以通过分别搜索 `vmware`、`hyperv`、`virtio`、`kvm` 这些关键字找到内核中相关特性的配置，全部打开并且保存即可。关于 KVM，作为 Host 提供的那一些特性是不需要的，忽略即可。
+### Virtio
+
+Virtio 提供了一系列半虚拟化驱动程序，包括：
+
+* GPU
+* 随机数发生器
+* SCSI 设备接口
+* Balloon（动态内存）
+* Block 设备接口
+* Console
+* 输入输出设备
+* 虚拟的 Bus
+* PCI 前端驱动
+* 网络设备驱动
+* 虚拟 Socket，用于与 Host 直接通信
+
+我们这里会用到的包括 SCSI、Block、Console、PCI、Bus 以及网络设备，简单起见全选即可。
 
 ![](../assets/images/diy-nas-project-4/kernel_menuconfig_virtio.png)
 
-遇到某些选项无法打开的时候，将依赖项全部选中后再尝试即可。完成后保存并重新构建 LEDE，我们就得到了适合各种 Hypervisor 的 LEDE。
+### VMWare
+
+VMWare 提供了 GPU、动态内存、VMXNET3 网卡、SCSI 以及与 Host 通信用的 VMCI 驱动程序。同样全选就行了。
+
+![](../assets/images/diy-nas-project-4/kernel_menuconfig_vmware.png)
+
+### Hyper-V
+
+Hyper-V 的情况要复杂一些。
+
+驱动程序仍然还是上述的几样（FrameBuffer、动态内存、虚拟网卡、虚拟 SCSI 接口、输入输出设备、主机通信接口、PCI Bus）。同样全选即可。
+
+![](../assets/images/diy-nas-project-4/kernel_menuconfig_hyperv.png)
+
+但是全选并不意味着能全都正常工作……草民的尝试中就发现 LEDE 默认会忽略 Hyper-V 的 PCI Bus。通过以下方法可以绕过这个问题，但是实际使用的时候会立即 Oops 崩溃，原因不明：
+
+```patch
+diff --git a/config/Config-kernel.in b/config/Config-kernel.in
+index 3468899..8a55b1e 100644
+--- a/config/Config-kernel.in
++++ b/config/Config-kernel.in
+@@ -765,3 +765,8 @@ config KERNEL_DEVKMEM
+          Say Y here if you want to support the /dev/kmem device. The
+          /dev/kmem device is rarely used, but can be used for certain
+          kind of kernel debugging operations.
++
++config KERNEL_PCI_HYPERV
++       bool "Hyper-V PCI Frontend"
++       help
++               just test.
+```
+
+然后在 Kernel build settings 中选中 Hyper-V PCI Frontend 即可。
+
+当然，这里的 Crash 确实在我能力之外，无力解决……
+
+### UEFI Support
+
+如果需要 Hyper-V Gen2 提供的一些特性的话，需要让我们编译的 LEDE 支持 UEFI 启动。
+
+在本地 merge 这个 branch：[sduponch:x86_uefi](https://github.com/sduponch/source/tree/x86_uefi)，然后即可在 Target Images 中发现 UEFI 相关选项。
+
+不知道为什么这个还没有 merge 进 trunk master……
+
+## PCI 直通如何实现？
+
+回去补一下相关说明吧……
+
+## 主机与虚拟机的网络配置
+
+不同的 Host OS 下选择了不同的网络配置，后面谈……
+
+## 存储部分的设计
+
+对于最终决定的方案 KVM 来说，这个应该算得上是大坑了……后面再谈……
