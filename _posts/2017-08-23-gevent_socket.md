@@ -1,4 +1,7 @@
-# Gevent 分享 （4） 典型应用：gevent.socket
+---
+layout: post
+title:  Gevent（4）典型应用：gevent.socket
+---
 
 目录：
 
