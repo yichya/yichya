@@ -58,7 +58,7 @@ $ docker run -d --name rabbitmq rabbitmq:3-management
 查看容器 IP：
 
 {% highlight bash %}
-$ docker inspect --format '\{\{ .NetworkSettings.IPAddress \}\}' rabbitmq
+$ docker inspect --format '\{\{ .NetworkSettings.IPAddress }}' rabbitmq
 172.17.0.2
 {% endhighlight %}
 

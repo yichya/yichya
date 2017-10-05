@@ -8,9 +8,6 @@
         {{ site.title }}
       </a>
     </{% if page.layout == "index" %}h1{% else %}div{% endif %}>
-    {% if page.url == "/" %}
-      {% include svg/coding-logo.svg %}
-    {% endif %}
     <p class="lead">{{ site.description }}</p>
   </header>
   {% include sidebar-nav-links.html %}

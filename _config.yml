@@ -4,8 +4,8 @@ highlighter:      rouge
 
 # Setup
 title:            QC Blog
-tagline:          '何以解忧，唯有暴富 :)'
-description:      '何以解忧，唯有暴富 :)'
+tagline:          '何以解忧，唯有暴富'
+description:      '何以解忧，唯有暴富'
 url:              https://fongandrew.github.io/hydeout
 baseurl:          # the optional subpath of your site, e.g. "/blog"
                   # NB: This applies to all pages in your Jekyll site.
