@@ -6,7 +6,7 @@ highlighter:      rouge
 title:            QC Blog
 tagline:          '何以解忧，唯有暴富'
 description:      '何以解忧，唯有暴富'
-url:              https://fongandrew.github.io/hydeout
+url:              https://blog.yichyaqc.cn
 baseurl:          # the optional subpath of your site, e.g. "/blog"
                   # NB: This applies to all pages in your Jekyll site.
                   # If you want to move just the blog index pages but keep
@@ -15,7 +15,7 @@ baseurl:          # the optional subpath of your site, e.g. "/blog"
 
 author:
   name:           'yichya QC'
-  url:            https://twitter.com/fongandrewc
+  url:            https://blog.yichyaqc.cn
 
 paginate:         5
 # paginate_path:    '/page:num'
@@ -33,7 +33,7 @@ sidebar_home_link:  true
                                 # set this to the root of the paginate_path
                                 # to enable a separate blog link.
 github:
-  repo:             https://github.com/fongandrew/hydeout
+  repo:             https://coding.net/u/yichya
 
 permalink:   /:title/
 disqus:

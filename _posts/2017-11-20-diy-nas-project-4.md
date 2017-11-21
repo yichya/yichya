@@ -30,10 +30,10 @@ tags:
     * 虚拟化的分类
         * Type I 与 Type II
         * Full Virtualization 与 Paravirtualization
-<!--    * MMIO 与 IOMMU
+        * MMIO 与 IOMMU
         * VT-d，VT-x
         * SR-IOV
-            * Hyper-V 中 SR-IOV 发挥的作用 -->
+            * Hyper-V 中 SR-IOV 发挥的作用
 * 针对上述三种 Hypervisor 的实践
     * OpenWRT 的定制
         * Hyper-V 驱动的迷之 Bug？
