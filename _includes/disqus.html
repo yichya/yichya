@@ -1,9 +1,5 @@
 {% if site.disqus.shortname %}
-  <div id="disqus_thread">
-    <button class="disqus-load" onClick="loadDisqusComments()">
-      Load Comments
-    </button>
-  </div>
+  <div id="disqus_thread"></div>
   <script>
 
   /**
@@ -23,6 +19,7 @@
     s.setAttribute('data-timestamp', +new Date());
     (d.head || d.body).appendChild(s);
   }
+  loadDisqusComments();
   </script>
   <noscript>
     Please enable JavaScript to view the
