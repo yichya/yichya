@@ -1,6 +1,6 @@
 ---
 layout: post
-title: MongoDB Transaction support with WireTiger
+title: MongoDB Drops ACID
 categories:
   - Large Things
 tags:
@@ -8,7 +8,11 @@ tags:
   - wiretiger
 ---
 
-Index:
+大概算是个大新闻：MongoDB 即将在 4.0 版本引入单个 Replica Set 上的 Transaction 支持，在 MongoDB 4.2 上引入支持 Sharding 的 Transaction 支持。为了达到这个目的，MongoDB 已经经过了三年多的持续开发。
+
+![](../assets/images/mongodb-drops-acid/path-to-transactions.png)
+
+这里选择下面的一些核心特性，介绍一下 MongoDB 为了实现 Transaction 都引入了哪些新的特性：
 
 * Logical Sessions
 * WiredTiger Timestamps
@@ -18,49 +22,49 @@ Index:
 
 # Logical Sessions
 
-Logical Sessions 是 MongoDB 3.6 引入的一项新特性。
+Logical Sessions 是 MongoDB 3.6 引入的一项新特性，通过引入 Logical Sessions，MongoDB 管理自身的能力得到了极大的增强。
 
 ## Logical Session ID
 
-Logical Session ID 用于标记系统中的其他资源和操作。
+Logical Session ID（LSID）用于标记系统中的各类资源和操作等。
 
 * **id**: GUID，通过一些算法保证在分布式系统内的唯一性。
 * **uid**: 用户名的 SHA-256 Digest，用于区分不同的 Client。
 
-这些 ID 类似于 ObjectID，均在客户端直接生成。
+这些 ID 类似于 ObjectID，均在客户端直接生成，不需要与任何 mongod / mongos 请求获得。
 
 ## Use Case 1：Easy Administration
 
 ```
 
-      +------+ +------+ +------+
-      | App1 | | App2 | | App3 |
-      +------+ +------+ +------+
+      +------+  +------+  +------+
+      | App1 |  | App2 |  | App3 |
+      +------+  +------+  +------+
 
   +--------+   +--------+   +--------+
   | mongos |   | mongos |   | mongos | 
   +--------+   +--------+   +--------+
 
-  +------------+  +------------+
-  |   shard1   |  |   shard2   |
-  | +--------+ |  | +--------+ |
-  | | sec-md | |  | | sec-md | |
-  | +--------+ |  | +--------+ | 
-  | +--------+ |  | +--------+ |
-  | | pri-md | |  | | sec-md | |
-  | +--------+ |  | +--------+ |
-  | +--------+ |  | +--------+ |
-  | | sec-md | |  | | pri-md | |
-  | +--------+ |  | +--------+ |
-  +------------+  +------------+
+     +------------+  +------------+
+     |   shard1   |  |   shard2   |
+     | +--------+ |  | +--------+ |
+     | | sec-md | |  | | sec-md | |
+     | +--------+ |  | +--------+ | 
+     | +--------+ |  | +--------+ |
+     | | pri-md | |  | | sec-md | |
+     | +--------+ |  | +--------+ |
+     | +--------+ |  | +--------+ |
+     | | sec-md | |  | | pri-md | |
+     | +--------+ |  | +--------+ |
+     +------------+  +------------+
 
 ```
 
 类似于很多常见数据库，MongoDB 支持主从复制和分片。每一个 Replica Set 有一个 Primary 和几个 Secondary 节点，在集群启动时通过选举选出一个 Primary 节点。当遇到节点崩溃或者网络错误时，节点的身份可以随情况改变。分片通过 mongos 完成，App 向 mongos 发送请求，mongos 进行路由并找到对应的 Shards，在对应的 Shards 上完成操作。每次请求数据并不一定会都在同一个 shard 上，mongos 会自动完成处理。
 
-每一次 Query 会进行下面的操作：
+对于任何一个请求，都需要涉及到下面两种概念：
 
-1. Operations（Op-s），可能是管理命令或者 IO 操作；
+1. Operations（Op-s），管理命令或者 IO 操作；
 2. Cursors，实际执行命令并返回数据。
 
 在 MongoDB 3.4 中，当进行了错误的操作（如 collection.find 使用的字段没有索引导致 mongos 去所有的 shard 上面进行全 collection 的扫描）时，用户能做的事情十分有限，只能通过设定的 Timeout 去终止他们。尤其当 mongos 恰好在此时崩溃 / 断开网络连接了，而下面的 shards 中执行操作的 Cursors 就会彻底脱离控制，用户不仅拿不到查询的数据，也无法停止查询。
@@ -98,7 +102,7 @@ MongoDB 利用 Sessions Collection 追踪创建超过 30 分钟的操作并进�
 
 WiredTiger 从 MongoDB 3.2 开始成为 MongoDB 的默认存储引擎，而 WiredTiger 是支持 Transaction 的。在 WiredTiger 中，Transaction 的实现主要依靠基于 Timestamp 的 MVCC。
 
-# MongoDB OpLog 与 WiredTiger Journal
+## MongoDB OpLog 与 WiredTiger Journal
 
 ```
 +-----+-----+-----+-----+
