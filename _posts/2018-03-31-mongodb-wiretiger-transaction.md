@@ -12,13 +12,14 @@ tags:
 
 ![](../assets/images/mongodb-drops-acid/path-to-transactions.png)
 
-这里选择下面的一些核心特性，介绍一下 MongoDB 为了实现 Transaction 都引入了哪些新的特性：
+这里选择下面的一些特性，介绍一下 MongoDB 为了实现 Transaction 进行的工作：
 
 * Logical Sessions
 * WiredTiger Timestamps
 * Retryable writes
 * Safe Secondary Reads
 * Cluster-wide Logical Time
+* Local Snapshot Reads
 
 # Logical Sessions
 
@@ -40,24 +41,23 @@ Logical Session ID（LSID）用于标记系统中的各类资源和操作等。
       +------+  +------+  +------+
       | App1 |  | App2 |  | App3 |
       +------+  +------+  +------+
-
+        ||         ||         ||
   +--------+   +--------+   +--------+
   | mongos |   | mongos |   | mongos | 
   +--------+   +--------+   +--------+
-
+             X            X
      +------------+  +------------+
      |   shard1   |  |   shard2   |
      | +--------+ |  | +--------+ |
-     | | sec-md | |  | | sec-md | |
+     | | sec-md | |  | | sec-md | |  sec-md: Secondary mongod Instance
      | +--------+ |  | +--------+ | 
      | +--------+ |  | +--------+ |
-     | | pri-md | |  | | sec-md | |
+     | | pri-md | |  | | sec-md | |  primary-md: Primary mongod Instance
      | +--------+ |  | +--------+ |
      | +--------+ |  | +--------+ |
      | | sec-md | |  | | pri-md | |
      | +--------+ |  | +--------+ |
      +------------+  +------------+
-
 ```
 
 类似于很多常见数据库，MongoDB 支持主从复制和分片。每一个 Replica Set 有一个 Primary 和几个 Secondary 节点，在集群启动时通过选举选出一个 Primary 节点。当遇到节点崩溃或者网络错误时，节点的身份可以随情况改变。分片通过 mongos 完成，App 向 mongos 发送请求，mongos 进行路由并找到对应的 Shards，在对应的 Shards 上完成操作。每次请求数据并不一定会都在同一个 shard 上，mongos 会自动完成处理。
@@ -79,8 +79,8 @@ Logical Session ID（LSID）用于标记系统中的各类资源和操作等。
                                     
 +--------+        +-----------------+        +---------------------+
 | Client | -----> | mongod / mongos | -----> | Sessions Collection |
-+--------+  LSID  |                 |  sync  +---------------------+
-                  +--^--------------+ (5min interval)
++--------+  LSID  |  #              |  sync  +---------------------+
+                  +--+--------------+ (5min interval)
                      |
                  Controller
 ```
@@ -108,24 +108,71 @@ WiredTiger 从 MongoDB 3.2 开始成为 MongoDB 的默认存储引擎，而 Wire
 +-----+-----+-----+-----+
 | ... | 100 | 101 | 102 |  MongoDB OpLog
 +-----+-----+-----+-----+
-
+         |        X     
 +-----+-----+-----+-----+
 | ... | 100 | 102 | 101 |  WiredTiger Journal
 +-----+-----+-----+-----+
 ```
 
-MongoDB 的 Replication 基于 OpLog，也就是将每一次操作记录下来并在 Secondary 上重放。由于采取了这种形式，OpLog 的顺序就十分重要。而由于并发的关系，存储引擎层和 MongoDB 层上对顺序的定义可能是不一样的（如图）。
+MongoDB 的 Replication 基于 OpLog，也就是将每一次操作记录下来并在 Secondary 上 Redo。由于采取了这种形式，OpLog 的顺序就十分重要。而由于并发的关系，存储引擎和 MongoDB 记录自己的 Journal 或者 OpLog 的顺序可能是不一样的（如图），这时在 Secondary 上进行的 Redo 就会出现问题。MongoDB 解决问题的方法是在底层增加了一个 Timestamp 且通过某种方式（Cluster-wide Logical Clock）保证 Timestamp 的准确性。
 
+```
+          +------+
+          | root |
+          +------+
+         /        \
++-------+          +-------+
+| kv kv |          | kv kv |
++-------+          +-------+
+                        |
+                        | update
+                        |
+               +-----+------+------+
+       update  | txn | next | data | data: BSON of document or index updated
+    structure  | ts  |      |      | ts: Timestamp
+               +-----+------+------+
+                        |
+                        | update
+                        |
+               +-----+------+------+
+       update  | txn | next | data | data: BSON of document or index updated
+    structure  | ts  |      |      | ts: Timestamp
+               +-----+------+------+
+```
 
+MongoDB 使用类似上面表示的树形结构来存储 Document 和 Index。当进行更新时 WiredTiger 创建一个 Update Structure 来标记具体更新的内容，其中包含一些与 Transaction 相关的信息，到下一个 update structure 的链接，以及具体更新的内容。进行读取操作的时候，WiredTiger 通过按顺序读取 update structures 来返回正确的结果。当然这是一个很简化的描述。
 
+为了解决 OpLog / Journal 的顺序问题，WiredTiger 在 update structure 中增加了 Timestamp。这个 Timestamp 是由 MongoDB 提供给 WiredTiger 的。WiredTiger 将会按 Timestamp 记录的顺序处理 update structures，这样就能保证 WiredTiger 的 Journal 跟 MongoDB 的 OpLog 顺序一致。另外，WiredTiger 还可以读取截止到某一个 Timestamp 的数据（Recover to timestamp）。
 
+## 处理 Replication 乱序的情况
 
+在进行 Replication 的时候，OpLog 会被多个线程同时读取并 Redo 在 Secondary 上（因为只有一个的话太慢了，跟不上 Primary）。虽然每一个线程会主动选择关系比较紧密的一组 OpLog 进行操作以保证 Replication 按正确的顺序进行，但是不同线程进行 Redo 的时候同样可能出现 Redo 顺序混乱的问题。
 
+```
++-----+-----+-----+-----+
+| ... | 100 | 101 | 102 |  MongoDB OpLog Batches（Ordered）
++-----+-----+-----+-----+
+         |     |     |
+ threads |      \   / 
+      to |       \ /
+   apply |       / \
+   oplog |      /   \
+         |     |     |
++-----+-----+-----+-----+
+| ... | 100 | 102 | 101 |  Data applied to Secondary
++-----+-----+-----+-----+
+```
 
+MongoDB 同样利用 Timestamp 解决了这一问题，解决问题的方式类似于 Recover to Timestamp：进行查询时，即使 Secondary 上 Redo 的顺序是乱的，WiredTiger 仍然会按照 update structure 中记录的 Timestamp 来读取数据。
 
+## Batch Boundary
 
-
-
-
-
+```      
+      |     batch 1     |     batch 2     |
++-----+-----+-----+-----+-----+-----+-----+
+| ... | 100 | 101 | 102 | 103 | 104 | 105 |
++-----+-----+-----+-----+-----+-----+-----+
+      |                 |                 |
+  timestamp         timestamp
+```
 
