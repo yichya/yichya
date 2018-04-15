@@ -359,6 +359,8 @@ Transaction Table 也是需要复制到各个 Secondary 上的。Replication 的
 
 # Cluster-wide Logical Time
 
+前面我们提到了很多跟 Timestamp 相关的东西，那么保证 Cluster 中有一个足够精确的时钟对于上面很多特性的实现都是至关重要的。MongoDB 实现了 Cluster 级别的全局时钟，并且基于这个时钟还实现了 Casual Consistency 以及 Global Snapshot。
+
 ## Casual Consistency
 
 https://en.wikipedia.org/wiki/Consistency_model#Causal_Consistency
