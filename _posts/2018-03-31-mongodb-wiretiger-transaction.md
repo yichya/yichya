@@ -1,11 +1,11 @@
 ---
 layout: post
-title: MongoDB Drops ACID
+title: MongoDB now with Transaction support
 categories:
   - Large Things
 tags:
   - mongodb
-  - wiretiger
+  - wiredtiger
 ---
 
 大概算是个大新闻：MongoDB 即将在 4.0 版本引入单个 Replica Set 上的 Transaction 支持，在 MongoDB 4.2 上引入支持 Sharding 的 Transaction 支持。为了达到这个目的，MongoDB 已经经过了三年多的持续开发。
@@ -359,7 +359,80 @@ Transaction Table 也是需要复制到各个 Secondary 上的。Replication 的
 
 # Cluster-wide Logical Time
 
-前面我们提到了很多跟 Timestamp 相关的东西，那么保证 Cluster 中有一个足够精确的时钟对于上面很多特性的实现都是至关重要的。MongoDB 实现了 Cluster 级别的全局时钟，并且基于这个时钟还实现了 Casual Consistency 以及 Global Snapshot。
+前面我们提到了很多跟 Timestamp 相关的东西，那么保证 Cluster 中有一个足够精确的时钟对于上面很多特性的实现都是至关重要的。MongoDB 实现了 Cluster 级别的全局时钟，并且基于这个时钟还将实现 Casual Consistency 以及 Global Snapshot。
+
+## Lamport Clock and Vector Clock
+
+数学学的不太好……简单的解释下。
+
+Lamport Clock 是一个在分布式系统中用来确定事件发生顺序的方法。它并不真的是一个时钟，只是一个跟事件关联的数值；在分布式系统内不同进程进行交互的时候通过这个数值，并将这个数值与事件绑定，通过这个数值即可确定事件的先后发生顺序。
+
+```python
+# Sender
+time += 1              
+time_stamp = time
+send(message, time_stamp)         # send logical time to receiver
+
+# Receiver
+message, time_stamp = receive()   
+time = max(time_stamp, time) + 1  # update logical time
+```
+
+这样对于这样交流过的 Sender 和 Receiver，有如下结论：
+
+* 如果事件 b 在事件 a 之后发生，那么 `C(a) < C(b)`；
+* 如果 `C(a) < C(b)`，那么事件 b 有可能在事件 a 之后发生：
+    * 如果事件 a 和事件 b 有因果关系，那么事件 b 在事件 a 之后发生，否则无法比较；
+    * 事件 b 一定不会在事件 a 之前发生。
+
+上面情况下通过上述方式交流过的进程之间的关系被称为 Partial Order；如果一个系统中所有的进程都通过这样的交流互相达到了 Partial Ordering，那么称这个系统达到了 Total Order，这样这个系统内所有事件的先后顺序都可以被确定。
+
+除了 Lamport Clock 还有很多更强大的 Logical Clock 比如 Vector Clock：
+
+![](../assets/images/mongodb-drops-acid/Vector_Clock.svg)
+
+Vector Clock 的规则是这样的：
+
+1. 开始所有的 Clock 都是 0
+2. 某一进程内部产生事件时，把自己的 Clock + 1
+3. 某一进程向其他进程发消息时，把自己的 Clock + 1 然后把自己的 Vector 发给其他进程
+4. 某一进程接受信息的时候，把自己的 Clock + 1 然后把自己的 Vector 中所有的进程对应的 Clock 值跟接收到的信息中的 Vector 做比较，把自己记录的值更新为两者中比较大的值。
+
+Vector Clock 的优势在于可以检测出多点写入时产生的冲突。MongoDB 并没有使用 Vector Clock，原因在于 Vector Clock 的通信机制较为复杂，Payload 大（需要传递所有的进程的 Vector），会导致比较大的性能开销。
+
+其他的 Logical Clock 这里就不再多谈了。如果想更详细的了解请戳下面这些 Wikipedia 链接：
+
+* https://en.wikipedia.org/wiki/Lamport_timestamps
+* https://en.wikipedia.org/wiki/Happened-before
+* https://en.wikipedia.org/wiki/Partially_ordered_set
+* https://en.wikipedia.org/wiki/Total_order
+* https://en.wikipedia.org/wiki/Vector_clock
+
+## Lamport Clock in MongoDB
+
+与学术研究不同，实际工程上需要考虑的东西更多一点。下面我们来看 MongoDB 是怎样利用 Lamport Clock 的：
+
+1. MongoDB 中发送和接收并不代表一次事件，只有改变了数据库状态的操作（比如一次写入）才叫做事件，也只有这些事件才会导致上面 `time` 的增加（被称作一次 Tick）。很显然，Tick 只会发生在 Primary 上。
+2. 所有互相通信的进程都会给对方发送目前自己已知的最大的 `time` 值，接收方再去根据这个值进行 Tick。
+
+但是有下面一种特殊的情况需要处理：
+
+```
+                      (1)                                 
+Malicious Client  ---------> +----------------+        
+                             |                |
+Client --------------------> | MongoDB Server | (2)
+                (3)          |                |
+Client --------------------> +----------------+
+
+(1) Malicious client send 2^63 - 1 as timestamp
+(2) MongoDB Server Tick, time += 1
+(3) Normal clients send writes and they fail
+```
+
+假设有一个恶意客户端想破坏 MongoDB 服务器，它只需要发送 2^63 - 1 作为 Logical Time，这样 MongoDB 服务器进行 Tick 的时候对这个值 +1，然后 Logical Clock 就崩溃了。更糟糕的是一旦这次写入过了 Majority Commit，所有的 Secondary 都会跟着崩溃，唯一的修复方法只能是去修改数据库底层的数据存储。
+
+解决这个问题的方法是使用签名。对 Cluster Time 进行签名，这样客户端就无法修改 Cluster Time。这跟上面提到的两个规则并不矛盾。当然这样的加密可能会带来一些性能损失，不过 MongoDB 在这里进行了一定的优化，实际性能损失并不明显。
 
 ## Casual Consistency
 
@@ -374,3 +447,76 @@ MongoDB 利用 Cluster-wide Logical Time 作为联系实现了 Causal Consistenc
 3. Read from Secondary `{afterClusterTime: X}`
 4. Secondary wait for replication
 5. Secondary return `{_id: 5, page: 4}`
+
+# Local Snapshot Reads
+
+```js
+session.startTransaction({readConcern: {level: "snapshot"}});
+var cursor = collection.find({a: 5});
+while (cursor.hasNext()) {
+    printJson(cursor.next());
+}
+session.commitTransaction();
+```
+
+* `readConcern.level = snapshot` 所有读取都是在这个 Snapshot 上的。
+* `session.commitTransaction()` 用户使用 Snapshot（实际上是 WiredTiger 的 Snapshot）会占用一些 cache 之类的资源，commit 或 abort Transaction 可以主动释放这些资源。
+
+目前上面这些操作只能在一个单独的 Replica Set 上完成；上面提到的 Global Snapshot 现在还没搞定，要等 MongoDB 4.2。
+
+```js
+while (!batch.full() && wtCursor.hasNext()) {
+    next = wtCursor.next();
+    if (filter.matches(next)) {
+        batch.add(next);
+    }
+    if (timeToYield()) {
+        checkForInterrupt();            // Check if killed or timeout
+        wtCursor.saveState();           
+        releaseLocksAndWtSnapshot();    // Release resources for snapshot
+        reacquireLocksAndWtSnapshot();  // Acquire a newer one snapshot
+        wtCursor.restoreState();
+    }
+}
+
+return batch;
+```
+
+假设我们在进行一些查询，需要扫描某个 Collection。上面是 MongoDB 进行查询时服务器的伪代码。
+
+首先我们需要一个 WiredTiger 的 Cursor 来扫整个 Collection。当 Cursor 向 Batch 里面写东西的时候会去逐一比较 Filter，匹配的放进 Batch。当需要返回数据给客户端的时候，MongoDB 会先检查 Op 是否被 Kill 或者是否超时，然后会保存 Cursor 的状态，释放锁和 Snapshot，然后重新获得锁和一个新的 Snapshot 并还原 Cursor 的状态。虽然此时是一个旧的 Cursor 从一个新的 Snapshot 开始读，但是 WiredTiger 仍然可以准确返回上次位置继续进行读取。Magic。
+
+但是对于 Snapshot Read 来说，返回数据的时候不会有释放锁、释放 Snapshot、重新获得锁、获得新的 Snapshot 的过程，MongoDB 只从开始时的 Snapshot 读取。
+
+这样对于单个读取操作来说足够了，但是对于多个请求同时需要读取的情况该如何处理呢？
+
+```
+                        +----------------+
+         (1)find        | MongoDB Server |
+     -----------------> |  +----------+  |
+         (3)return      |  | Sessions |  |
+     <----------------- |  |          |  |
+         (4)getMore     |  | (2) Lock |  |
+     -----------------> |  | Snapshot |  |
+         (6)commit      |  |          |  |
+     -----------------> +--+----------+--+
+```
+
+MongoDB 利用 Logical Session ID 将用户请求与锁和 Snapshot 进行关联，这样每一个用户可以通过自己的 lsid 得到自己的 Snapshot 以及 Cursor，这样用户可以很方便的继续从 Cursor 上获得数据。
+
+1. 用户进行一次 find 这样的操作。
+2. MongoDB 返回数据前会记录对应的锁和 Snapshot。
+3. MongoDB 返回数据
+4. 用户发送 getMore 请求，从上次中断的地方继续读。
+5. 返回数据前同样经过 (2)(3) 的步骤，先保存状态再返回数据。
+6. commit 或者 abort 结束 Transaction，Server 释放锁和 Snapshot。
+
+其实在这里只使用 Cursor 同样可以达到目的，但是 MongoDB 将这样的操作统一划到 Transaction 的范围内，原因是 MongoDB 希望能将所有的操作和 Session 关联起来，便于更好的管理；另外可能会存在同时在某个 Snapshot 上用多个 Cursor 进行操作的情况（这些操作不会同时进行，但是可以交替使用同一组锁和 Snapshot）。
+
+# Finally
+
+MongoDB 从 3.0 开始把默认的 mmap 存储引擎换掉，改为使用 WiredTiger，到现在已经几乎做好支持 ACID 的准备，确实费了相当大的力气，即使到现在工作都尚未完成。目前无论是 MongoDB 还是 WiredTiger，文档都并不十分详细；而且 MongoDB 的 Transaction 支持还在紧张开发中，很多方案可能还会被修改。
+
+这篇东西虽然花了不少时间整理，但是由于草民个人水平极其有限以及 MongoDB 官方文档并不太详细（Blog 基本上都是在吹牛逼……），其中还是有很多东西说的并不很清晰，也很可能跟实际情况存在一些出入。不过学习的过程中还是涨了很多姿势，一开始以为就是一个基于时间戳的 MVCC 我还是太年轻了，看到 Vector Clock 的时候岂止一脸懵逼。
+
+最后希望 MongoDB 4.0 尽快发布，支持 Transaction 的文档数据库，听起来就刺激。
