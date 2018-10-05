@@ -296,7 +296,7 @@ $ proxychains make image PROFILE="HG556a_C"
 
 在服务页面中选择 ShadowSocks，填写好基本配置。
 
-![shadowsocks-1](http://blog.yichyaqc.cn/assets/images/openwrt-customize-1/ss-1.png)
+![shadowsocks-1](../assets/images/openwrt-customize-1/ss-1.png)
 
 ### Enable ChinaDNS
 
@@ -321,17 +321,17 @@ ChinaDNS 的配置有以下几种可选方案：
 
 在服务页面中选择 ShadowSocks，填写好 UDP 端口转发配置，将 UDP 5300 转发到 Google 公共 DNS 即可。
 
-![shadowsocks-2](http://blog.yichyaqc.cn/assets/images/openwrt-customize-1/ss-2.png)
+![shadowsocks-2](../assets/images/openwrt-customize-1/ss-2.png)
 
 然后配置 ChinaDNS，设置上游 DNS 为一个国内 DNS 和我们转发的 DNS（即 127.0.0.1:5300）。Local Port 就是 ChinaDNS 提供服务的端口，这里默认 5353 即可。Bidirectional Filter 建议打开，可以减少受到 DNS 污染的几率，但是可能会减慢部分网站访问速度。
 
-![chinadns](http://blog.yichyaqc.cn/assets/images/openwrt-customize-1/chinadns.png)
+![chinadns](../assets/images/openwrt-customize-1/chinadns.png)
 
 ### Configure DnsMasq
 
 最后配置 dnsmasq 将所有的 DNS 请求转发给 ChinaDNS 的 5353 端口。
 
-![dns](http://blog.yichyaqc.cn/assets/images/openwrt-customize-1/dns.png)
+![dns](../assets/images/openwrt-customize-1/dns.png)
 
 确定 ChinaDNS 和 ShadowSocks 都已经启动并正常工作，即可享受透明代理带来的愉悦啦。
 
@@ -341,11 +341,11 @@ ChinaDNS 的配置有以下几种可选方案：
 
 国内的网站可以自动识别到国内，不经过代理，不影响速度。
 
-![speedtest-inside](http://blog.yichyaqc.cn/assets/images/openwrt-customize-1/speedtest_inside.png)
+![speedtest-inside](../assets/images/openwrt-customize-1/speedtest_inside.png)
 
 国外的网站自动通过代理访问，实现自动翻墙。
 
-![speedtest-outside](http://blog.yichyaqc.cn/assets/images/openwrt-customize-1/speedtest_outside.png)
+![speedtest-outside](../assets/images/openwrt-customize-1/speedtest_outside.png)
 
 同时可以看到，整个过程中我并没有打开右上角的 SwitchyOmega 代理切换。
 
