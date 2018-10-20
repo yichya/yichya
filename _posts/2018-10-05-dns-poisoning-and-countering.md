@@ -9,7 +9,7 @@ tags:
 
 DNS 污染极为简单易行且效果极佳，一直都是各种牛鬼蛇神搞事的极佳手段。这篇东西介绍一下常见的 DNS 投毒现象，以及草民尝试过的几种避免被投毒的方案。
 
-这篇东西假设您使用了基于 OpenWrt 的 NAT 网关（可以简单的理解为路由器），并且在使用其上配置的透明代理。如果没有基于 OpenWrt 的路由器，并且也懒得弄一个的话，建议在客户端上自己装个 Shadowsocks 简单解决一下；如果用了 OpenWrt 但是没有搞透明代理，可以往前翻一翻草民两年半前介绍 OpenWrt 上架设透明代理的那篇东西。
+这篇东西假设您使用了基于 OpenWrt 的 NAT 网关（可以简单的理解为路由器），并且在使用其上配置的透明代理（这里以 Shadowsocks 为例，V2Ray 没有用过，应该是差不多的），同时使用了 CHNRoutes 过滤国内 IPv4 地址。如果没有基于 OpenWrt 的路由器，并且也懒得弄一个的话，建议在客户端上自己装个 Shadowsocks 简单解决一下；如果用了 OpenWrt 但是没有搞透明代理，或者没有使用 CHNRoutes 的话，可以往前翻一翻草民两年半前介绍 OpenWrt 上架设透明代理的那篇东西。
 
 另外，由于这里提到的不少东西，如 ChinaDNS、DNS-forwarder 等并未收录在 OpenWrt 官方的 Packages 中，最好能够有自己的 ImageBuilder 或者 BuildRoot 环境。当然这些软件一般都有第三方构建好的适合各种体系结构的 ipk 包，如果您的路由器不是很特别的话，应该可以直接传到路由器中 opkg install 之。所谓「很特别的路由器」这里大概可以举一个例子：用树莓派刷个 OpenWrt 搞的那种「无线路由器」。一般第三方构建的 ipk 只有适合 ar71xx 或者 ramips 两种常见架构的，偶尔可能有 x86(64)，arm 的还是比较少见。如果有心思搞 arm 或者 x86/64 架构的路由器，不妨准备一个 BuildRoot 环境，搞事情会方便很多。OpenWrt 的 ImageBuilder 或者 BuildRoot 使用同样可以翻一翻草民之前的介绍。
 
@@ -129,15 +129,71 @@ ISP 投毒目前来看似乎还没那么丧心病狂，一般来说只有发到�
 
 设置这个就需要一个比较靠谱的 DNS 转发器了。最简单的办法肯定还是直接在路由器的 dnsmasq 上设置，参考上一步设置 dnsmasq 上游的图，在 IP 地址后面添加 #443 或者 #5353 这样的端口号即可。
 
+![](../assets/images/dns-poisoning-and-countering/dnsmasq-custom-port.png)
+
 ## 反制策略 3：使用 Shadowsocks 转发 UDP 流量，将 DNS 请求转发到墙外
 
-## 反制策略 3.5：在 3 的基础上增加 ChinaDNS 做线路优化
+Shadowsocks 除了转发 TCP 包之外，亦可转发 UDP 包。利用 Shadowsocks 的这一特性，我们可以配置隧道转发所有 UDP 请求，这些请求看起来就像是从 Shadowsocks 服务端发出的一样。
 
-## 反制策略 4：自建 DNS，SLA 自己来保证
+配置的方式一般都很简单，Shadowsocks 配置页面一般都有对应设置，设置好远程 DNS 地址和本地 DNS 端口就可以了。
+
+![](../assets/images/dns-poisoning-and-countering/shadowsocks-dns.png)
+
+按图上这样设置之后，只要发送 DNS 请求到路由器的 5353/udp 端口，请求就会通过 Shadowsocks 转发到 Shadowsocks 服务器上。
+
+![](../assets/images/dns-poisoning-and-countering/shadowsocks-dig.png)
+
+然后我们像上一步那样，设置 dnsmasq 的上游服务器为 `127.0.0.1#5353` 就可以实现转发所有 DNS 查询了。
+
+需要注意的是，因为 Shadowsocks 本身是运行在 TCP 上的，这样查询的一个比较明显的问题就是速度较慢，一般和 ping Shadowsocks 服务器的延时一致。不过考虑到 DNS 查询大多数情况下都是被缓存的，实际使用时会在首次进行 DNS 查询时感觉有些缓慢，不过影响尚可接受。
+
+### 反制策略 3.5：在 3 的基础上增加 ChinaDNS 做线路优化
+
+使用 Shadowsocks 转发所有 DNS 请求的缺点还在于会损失智能解析。智能解析根据查询来源 IP 自动分析最佳结果，但是如果使用 Shadowsocks 转发所有 DNS 请求，来源 IP 就变为 Shadowsocks 服务器的 IP，这样智能解析的结果肯定不适合使用了 chnroutes 进行过滤的情况（当然会适合使用全局代理的情况）。
+
+不过对于这个问题，其实有一个很巧妙的方法就是使用 ChinaDNS。ChinaDNS 的原理如下：
+
+> ChinaDNS 分国内 DNS 和可信 DNS。ChinaDNS 会同时向国内 DNS 和可信 DNS 发请求，如果可信 DNS 先返回，则采用可信 DNS 的数据；如果国内 DNS 先返回，又分两种情况，返回的数据是国内的 IP, 则采用，否则丢弃并转而采用可信 DNS 的结果。
+
+我们已经使用 Shadowsocks 的 UDP 隧道得到了可信 DNS，所以我们可以很简单的配置国内 DNS 为 `114.114.114.114` 或者 `119.29.29.29` 这样的公共 DNS，可信 DNS 配置为 `127.0.0.1:5353` 即可。然后给 ChinaDNS 指定一个运行端口，比如 5300，再改 dnsmasq 的上游端口就完成。
+
+OpenWrt 的官方仓库内并没有 ChinaDNS 和配套的 LuCI。如果没有 BuildRoot 环境的话，需要自己找对应架构的 ipk 包装到路由器上，如果有 BuildRoot 环境的话，clone 下面两个仓库，并放到 package/extra 目录下面，就可以在 menuconfig 里面找到了。
+
+* [https://github.com/aa65535/openwrt-chinadns](https://github.com/aa65535/openwrt-chinadns)
+* [https://github.com/aa65535/openwrt-dist-luci](https://github.com/aa65535/openwrt-dist-luci)
+
+安装 / 编译过程就不再赘述了，可以翻草民之前的介绍。配置参见下图（第二个 Bidirectional Filter / 双向过滤一般来说需要关掉）。考虑到路由器空间一般比较紧张，建议配置 ChinaDNS 和 Shadowsocks 使用同一份 ChnRoute 文件，避免空间浪费。
+
+![](../assets/images/dns-poisoning-and-countering/chinadns.jpg)
+
+*草民路由器上的 ChinaDNS 因为实践下面最后一种策略拆了，图是随便找的一个，图上配置运行端口是 5300，可信 DNS 是 `127.0.0.1:5353`，跟上面说的正好是反过来的，实际使用的时候注意一下。*
+
+使用 ChinaDNS 的问题其实还是很明显：如果国内 DNS 返回了在 CHNRoute 内的错误地址，那么 ChinaDNS 仍然会原样将这个错误地址返回，解析结果依然是不正常的。目前来看这种情况还是挺经常发生的，所以 ChinaDNS 目前只能说并不是很好用的方案，并不建议使用。
+
+## 反制策略 4：直接在路由器上通过 TCP 方式向上游进行 DNS 请求
+
+DNS 请求会被抢答或者投毒的原因都是因为其使用了不可靠的 UDP 协议。RFC 规范中其实同样定义了使用 TCP 进行 DNS 查询的方案，上面出现过很多次的 dig 工具就支持通过 TCP 方式查询，只要在查询的时候加上 +tcp 参数就行了。
+
+非常幸运的是，国外的 Google DNS 和 OpenDNS 都支持使用 TCP 方式查询，唯一问题只是绝大多数客户端对其支持都不是很好，尤其是 dnsmasq，实现非常诡异：udp 进 udp 出，tcp 进 tcp 出。有人提过 issues，官方的意思则是「现在的代码结构不太好，只能这么做，我们也没别的什么办法」。真棒。
+
+好在我们可以像跑 ChinaDNS 然后把它搞成 dnsmasq 的上游一样。支持这么搞的工具有 unbound 和 dns-forwarder，unbound 好处在功能强大且官方支持，坏处在依赖太多体积太大。dns-forwarder 简单可靠但是不在官方仓库里面，需要我们自己 clone。
+
+我们这里还是以 dns-forwarder 为例。配套的 LuCI 界面跟 ChinaDNS 在同一个仓库里，如果之前 clone 过就不用重复 clone 了。
+
+* [https://github.com/aa65535/openwrt-dns-forwarder](https://github.com/aa65535/openwrt-dns-forwarder)
+* [https://github.com/aa65535/openwrt-dist-luci](https://github.com/aa65535/openwrt-dist-luci)
+
+*配置 Todo，因为这个我跟 ChinaDNS 一块儿炸了*
+
+通过 TCP 方式请求好处在于连接相对 UDP 来说比较稳定可靠，至少目前使用这种方式还不会被篡改结果。而且这个结果理论上来说也是可以被篡改的，只是成本比较高。像 GFW 目前的 MITM 方式就是直接发 RST，避免过于复杂的 MITM。
 
 ## 反制策略 5：DNS over TLS 弄不起来，DNS over HTTPS 说不定可以
 
-## 反制策略 6：直接在路由器上通过 TCP 方式向上游进行 DNS 请求
+上面说的 DNS over TCP 仍然存在被 MITM 的可能性。那么有没有什么办法最大限度避免被 MITM 呢？很容易想到的方法应该是 SSL，利用 SSL 加密 DNS 的方式有两种即 DNS over TLS 和 DNS over HTTPS。前者目前来看由于种种原因比较凉（不细说了，草民也不是十分了解原因是什么，但是反正就是比较凉），后者则背靠 Google 和 Cloudflare，已经有了可以初步使用的实现。
+
+OpenWrt 的官方仓库里面有 https-dns-proxy 和一个简单的 LuCI 界面。这个实现的方式很简单
+
+## 反制策略 6：在墙内自建 DNS，SLA 自己来保证
 
 ## 反制策略 7：利用 DNS 白名单，自行实现「智能解析」，搭配 chnroute 实现最佳白名单方案
 
