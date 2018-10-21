@@ -212,7 +212,7 @@ Shadowsocks 除了转发 TCP 包之外，亦可转发 UDP 包。利用 Shadowsoc
 
 需要注意的是，因为 Shadowsocks 本身是运行在 TCP 上的，这样查询的一个比较明显的问题就是速度较慢，一般和 ping Shadowsocks 服务器的延时一致。不过考虑到 DNS 查询大多数情况下都是被缓存的，实际使用时会在首次进行 DNS 查询时感觉有些缓慢，不过影响尚可接受。
 
-### 反制策略 4.5：在 3 的基础上增加 ChinaDNS 做线路优化
+### 反制策略 4.5：在 4 的基础上增加 ChinaDNS 做线路优化
 
 使用 Shadowsocks 转发所有 DNS 请求的缺点还在于会损失智能解析。智能解析根据查询来源 IP 自动分析最佳结果，但是如果使用 Shadowsocks 转发所有 DNS 请求，来源 IP 就变为 Shadowsocks 服务器的 IP，这样智能解析的结果肯定不适合使用了 chnroutes 进行过滤的情况（当然会适合使用全局代理的情况）。
 
