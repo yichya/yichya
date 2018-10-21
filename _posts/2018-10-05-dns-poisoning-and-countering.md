@@ -9,7 +9,7 @@ tags:
 
 DNS 污染极为简单易行且效果极佳，一直都是各种牛鬼蛇神搞事的极佳手段。这篇东西介绍一下常见的 DNS 投毒现象，以及草民尝试过的几种避免被投毒的方案。
 
-这篇东西假设您使用了基于 OpenWrt 的 NAT 网关（可以简单的理解为路由器），并且在使用其上配置的透明代理（这里以 Shadowsocks 为例，V2Ray 没有用过，应该是差不多的），同时使用了 CHNRoutes 过滤国内 IPv4 地址。如果没有基于 OpenWrt 的路由器，并且也懒得弄一个的话，建议在客户端上自己装个 Shadowsocks 简单解决一下；如果用了 OpenWrt 但是没有搞透明代理，或者没有使用 CHNRoutes 的话，可以往前翻一翻草民两年半前介绍 OpenWrt 上架设透明代理的那篇东西。
+这篇东西假设您使用了基于 OpenWrt 的 NAT 网关（可以简单的理解为路由器），并且在使用其上配置的透明代理（这里以 Shadowsocks 为例，V2Ray 没有用过，应该是差不多的），同时使用了 ChnRoute 过滤国内 IPv4 地址。如果没有基于 OpenWrt 的路由器，并且也懒得弄一个的话，建议在客户端上自己装个 Shadowsocks 简单解决一下；如果用了 OpenWrt 但是没有搞透明代理，或者没有使用 ChnRoute 的话，可以往前翻一翻草民两年半前介绍 OpenWrt 上架设透明代理的那篇东西。关于 ChnRoute 下面也会有更详细一点的介绍。
 
 另外，由于这里提到的不少东西，如 ChinaDNS、DNS-forwarder 等并未收录在 OpenWrt 官方的 Packages 中，最好能够有自己的 ImageBuilder 或者 BuildRoot 环境。当然这些软件一般都有第三方构建好的适合各种体系结构的 ipk 包，如果您的路由器不是很特别的话，应该可以直接传到路由器中 opkg install 之。所谓「很特别的路由器」这里大概可以举一个例子：用树莓派刷个 OpenWrt 搞的那种「无线路由器」。一般第三方构建的 ipk 只有适合 ar71xx 或者 ramips 两种常见架构的，偶尔可能有 x86(64)，arm 的还是比较少见。如果有心思搞 arm 或者 x86/64 架构的路由器，不妨准备一个 BuildRoot 环境，搞事情会方便很多。OpenWrt 的 ImageBuilder 或者 BuildRoot 使用同样可以翻一翻草民之前的介绍。
 
@@ -241,16 +241,18 @@ DNS 请求会被抢答或者投毒的原因都是因为其使用了不可靠的 
 
 非常幸运的是，国外的 Google DNS 和 OpenDNS 都支持使用 TCP 方式查询，唯一问题只是绝大多数客户端对其支持都不是很好，尤其是 dnsmasq，实现非常诡异：udp 进 udp 出，tcp 进 tcp 出。有人提过 issues，官方的意思则是「现在的代码结构不太好，只能这么做，我们也没别的什么办法」。真棒。
 
-好在我们可以像跑 ChinaDNS 然后把它搞成 dnsmasq 的上游一样。支持这么搞的工具有 unbound 和 dns-forwarder，unbound 好处在功能强大且官方支持，坏处在依赖太多体积太大。dns-forwarder 简单可靠但是不在官方仓库里面，需要我们自己 clone。
+好在我们可以像跑 ChinaDNS 然后把它搞成 dnsmasq 的上游一样。支持这么搞的工具有 unbound、pdnsd 和 dns-forwarder，unbound 好处在功能强大且官方支持，坏处在依赖太多体积太大；dns-forwarder 简单可靠但是不在官方仓库里面，需要我们自己 clone；pdnsd 官方仓库好像也没有，没用过。
 
 我们这里还是以 dns-forwarder 为例。配套的 LuCI 界面跟 ChinaDNS 在同一个仓库里，如果之前 clone 过就不用重复 clone 了。
 
 * [https://github.com/aa65535/openwrt-dns-forwarder](https://github.com/aa65535/openwrt-dns-forwarder)
 * [https://github.com/aa65535/openwrt-dist-luci](https://github.com/aa65535/openwrt-dist-luci)
 
-之后就很简单，像设置 ChinaDNS 一样，设置 dns-forwarder 的上游为 `208.67.220.220:443`，然后运行在本地某一个端口，比如 15353，然后把 dnsmasq 的上游设置成 `127.0.0.1:15353` 就行了。
+之后就很简单，像设置 ChinaDNS 一样，设置 dns-forwarder 的上游为 `208.67.220.220:443`，然后运行在本地某一个端口，比如 5301，然后把 dnsmasq 的上游设置成 `127.0.0.1#5301` 就行了。
 
-*配置图 Todo，因为这个我跟 ChinaDNS 一块儿炸了*
+![](../assets/images/dns-poisoning-and-countering/dns-forwarder.png)
+
+*配置图再盗一次，因为这个我跟 ChinaDNS 一块儿炸了。图上的上游是 8.8.8.8*
 
 通过 TCP 方式请求好处在于连接相对 UDP 来说比较稳定可靠，至少目前使用这种方式还暂时不会被篡改结果。然而这个结果理论上来说也是可以被篡改的，只是成本比较高。像 GFW 目前的 MITM 方式就是直接发 RST，避免过于复杂的 MITM。
 
@@ -495,7 +497,7 @@ https-dns-proxy 的实现很简单：接到 DNS 请求后，利用 libcurl 请�
 
 Cloudflare 的 DNS over TLS 跟 Google 的相似，不过不会看来源 IP 也不会看 EDNS client subnet，据说是出于保护用户隐私的目的。
 
-这种做法的问题主要是查询过程十分繁琐。从头开始进行一次查询，要先 TCP 三次握手，然后 TLS 握手，然后发请求等返回。一来一回 200ms，整个请求查询完要花一秒多甚至近两秒，使用起来并不愉快。当然如果已经完成 TLS 握手建立了连接，那后续所有的查询都只需要一来一回，200ms 足够。
+这种做法的问题主要是查询过程十分繁琐。从头开始进行一次查询，要先 TCP 握手，然后 TLS 握手，然后发请求等返回。一来一回 200ms，整个请求查询完要花一秒多甚至近两秒，使用起来并不愉快。当然如果已经完成 TLS 握手建立了连接，那后续所有的查询都只需要一来一回，200ms 足够。
 
 ![](../assets/images/dns-poisoning-and-countering/https-dns-proxy-latency.png)
 
@@ -509,11 +511,35 @@ Cloudflare 的 DNS over TLS 跟 Google 的相似，不过不会看来源 IP 也�
 
 虽然反制这个的策略很简单（只要不信任 CNNIC 就可以避免被污染，然后利用未被污染的方式解析 `dns.google.com`），但是如果 GFW 真的这么做了的话，那真的是只能说**可耻**啊。当然 GFW 可能更倾向于直接像屏蔽 Google 的 IP 段一样屏蔽这个服务，那其实还是 Shadowsocks 代理 + EDNS client subnet 做智能解析优化，在不明显增加延时的情况下仍然可以保证正常访问这个服务。
 
-## 反制策略 7：利用 DNS 白名单，自行实现「智能解析」，搭配 chnroute 实现最佳白名单方案
+## 反制策略 7：利用 DNS 白名单，自行实现「智能解析」，搭配 ChnRoute 实现最佳白名单方案
+
+Shadowsocks 的 Windows 和 macOS 客户端使用的 pac 代理模式都是基于一个叫 gfwlist 的黑名单维护的。这个名单维护的是被 GFW 拉黑的域名的列表。然而主要问题在于 GFW 真正使用的名单肯定不会轻易公开，gfwlist 依靠社区进行维护，经常会出现更新不够及时的情况。而且比如像 GitHub 这种网站，GFW 态度不确定，连接情况时好时坏，一般会倾向于把它直接加入需要代理的域名列表。而且这个黑名单相当于在赤裸裸宣告「天朝有个 GFW 做审查，这些网站都是被审查的」，风险相当大，说不定哪一天就被东风快递了。
+
+接触透明代理之后听说了 ChnRoute，目前对 ChnRoute 的应用可以理解为 IP 白名单，也就是说在 ChnRoute 内的 IP 都进行直连，不在里面的统统走代理。虽然这样会导致一些周边国家，比如日本韩国这样，直连效果并不差的网站被强行走代理，不过对于非游戏党来说这样的问题还是可以接受的。
+
+ChnRoute 由 CNNIC 直接进行维护。官方维护的东西可以认为比较靠谱，而且不会有什么风险，实际使用效果也还是非常好的。ChnRoute 更新频率并不算高，很长一段时间不更新问题也并不大（不过如果放到路由器上跑的话，在有 BuildRoot 环境的时候还是建议费点心思维护一下）。
+
+结合 gfwlist 和 chnroute 思考，DNS 有黑名单，如果 IP 有白名单的话，那是不是 DNS 也可以有白名单？只要维护一份国内常见网站的域名列表，在这个列表内的域名使用国内 DNS 解析，结合智能解析，解析出来的地址应该也都是都是 ChnRoute 内的 IP，可以放心直连；不在列表内的使用可信 DNS 解析，结合智能解析，解析结果也是适合 Shadowsocks 服务端的 IP，这样直连和隧道都能得到最佳解析效果，岂不美哉。
+
+然后就真的找到了这么个东西：
+
+[https://github.com/felixonmars/dnsmasq-china-list/](https://github.com/felixonmars/dnsmasq-china-list/)
+
+这份列表被命名为「accelerated-domains.china.conf」，寓意是「国内域名加速列表」。Readme 中的用途倒是基本写明白了「可以用来加速 VPN」，这种就是做事做得不够干净没有很好的规避风险的表现（雾）其实白名单的话 Readme 写的冠冕堂皇一点的话完全就没有什么风险，美滴很。白名单的好处也是不需要经常维护更新，大网站不会天天加域名改域名，就算加了临时走一下代理也不太影响使用，最多慢一点。不过这个名单的维护频率高得离谱，当然也不是坏事了。
+
+列表的形式是 dnsmasq 配置文件，其中指定了这些域名使用 `114.114.114.114` 进行查询，那其实只要放到路由器里面，然后像下图这样修改 dnsmasq 的配置，并另外指定 dnsmasq 上游为一个可信 DNS（比如 DNS over HTTPS 或者 Shadowsocks 的 UDP 隧道）就行了。
+
+![](../assets/images/dns-poisoning-and-countering/accelerated-domains-china.png)
+
+实际使用的效果非常好，国内域名自动走 `114.114.114.114` 解析，解析只需 20ms 左右。国外域名解析通过 UDP 隧道，200ms 保证可信。
+
+![](../assets/images/dns-poisoning-and-countering/accelerated-dns-china-result.png)
+
+这种方案也是草民目前使用的方案，优点十分突出，无论是纯净程度、解析速度、稳定性、线路优化都几乎完美，配置难度在所有配置中也不是最高的（不需要重新编译或者到处找第三方包）。缺点主要是这个白名单十分庞大，对于配置比较低的路由器来说完全吃不消（当然草民的是软路由，资源日常过剩，并不存在这个问题）。
 
 # 技巧：拦截内网中的所有 DNS 请求，并全部交由路由器进行处理
 
-有的设备可能自己会指定一个 DNS 地址而不是使用 DHCP 分配的地址，这样的话我们的辛劳工作就白费了。为了避免这种情况出现，我们可以拦截从 LAN 区域转发到 WAN 区域任意地址 53/udp 端口的请求，并转发到路由器 IP 上，由路由器进行解析。
+有的设备可能自己会指定一个 DNS 地址而不是使用 DHCP 分配的地址，比如 Google 的电视棒就写死了 8.8.8.8，这样的话我们的辛劳工作就白费了。为了避免这种情况出现，我们可以拦截从 LAN 区域转发到 WAN 区域任意地址 53/udp 端口的请求，并转发到路由器 IP 上，由路由器进行解析。
 
 ```bash
 iptables -t nat -A PREROUTING -i br-lan -p udp --dport 53 -j DNAT --to 10.32.15.1
@@ -523,6 +549,12 @@ iptables -t nat -A PREROUTING -i br-lan -p udp --dport 53 -j DNAT --to 10.32.15.
 
 ![](../assets/images/dns-poisoning-and-countering/dns-trick.png)
 
-之后还可以在防火墙上配置 drop 掉从路由器出去的任何 DNS 请求，以绝后患。
+之后还可以在防火墙上配置 drop 掉从路由器出去的任何 DNS 请求（如果用了上面的白名单的话，记得放行 `114.114.114.114`），以绝后患。
 
 # 后记
+
+从两年前听说了透明代理这种神奇的东西开始，草民日常兴趣中的很大一块都是「给自己搭一个绝对舒适的局域网环境」。设备从一开始的洋垃圾 HG556a，到后面买了 MT7620 的极 1s，再到后面干脆买工控小主板和 802.11ac 无线网卡自己搭软路由，使用的 OpenWrt 也从随便下一个到自己用 ImageBuilder 再到自己 BuildRoot。当然网络使用的体验也确实在不断提升，现在我的所有能连 Wifi 的设备，基本除了手机需要到处带之外都不再特意装 Shadowsocks 客户端了，而且随便掏出一个就可以看 Youtube 1080P。
+
+从某个时候开始用 Telegram，加了很多 Channel，确实比起之前大大扩展了消息面。感觉「兼听则明」的道理什么时候都是适用的，尤其是在现在这个时代，消息越来越变得不可靠，增加消息来源更是非常重要。另外 Telegram 上的一些其他群组也会介绍一些 VPS 或者广域网相关的知识，增长见识也是极好的。目前草民使用 Telegram 的频率应该已经远高于微信，与微博不相上下了。
+
+天朝特色的审查在很长一段时间内应该都仍然会存在，甚至可能会更糟。虽然这里介绍了 7 种不同的 DNS 污染反制策略，但并没有哪一种策略无懈可击。其实原因很简单：如果 GFW 的策略也由黑名单转变为白名单的话该怎样？若是放到两三年前我尚且不会有这种担忧，但是现在真的感觉不敢说了。
