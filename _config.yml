@@ -14,7 +14,7 @@ baseurl:          # the optional subpath of your site, e.g. "/blog"
                   # sidebar_blog_link below.
 
 author:
-  name:           'yichya QC'
+  name:           'yichya'
   url:            https://www.yichya.review
 
 paginate:         10
