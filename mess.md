@@ -12,6 +12,12 @@ sidebar_link: true
 
 ------------
 
+_2019-01-05 06:26:15_
+
+折腾了半天才挂到 n.yichya.review 上。git push 的时候还一不小心把 bot token 带上去了，结果收到了个 GitGuardian 的邮件。。。本来想着是 push 上去之后 revoke 掉 token 就不管了，想想还是算了认真一点。。。
+
+------------
+
 _2019-01-05 18:44:50_
 
 完工了。一会儿挂到 n.yichya.review 上。
