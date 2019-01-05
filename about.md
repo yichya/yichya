@@ -1,5 +1,5 @@
 ---
-layout: page
+layout: post
 title: About
 sidebar_link: true
 ---
