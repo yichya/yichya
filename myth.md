@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: page
 title: Myth
 sidebar_link: true
 ---

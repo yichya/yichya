@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: page
 title: Mess
 sidebar_link: true
 ---
