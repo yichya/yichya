@@ -23,9 +23,9 @@ tags:
 
 原来的搬瓦工也不再用来当主力梯子了，基本上只用来继续支持手机 4g 梯子 + 内网穿透 + IPv6 下北邮人 PT。因为 shadowsocks-android 和 shadowsocks-libev 不支持 UDP over TCP，UDP 转发也是通过 UDP 传输的，这样导致在 UDP 丢包率比较高的环境下 UDP 转发非常成问题，体现就是在手机上连 DNS 转发都不能用，非常令人恼火。索性彻底拆了这台机器上的 ss 服务端。然后转而决定尝试 v2ray。尝试 v2ray 的过程又遇到了客户端上的其他的一些问题，不过还好影响不大，后面细谈。
 
-原来的 wr703n 因为最近 openwrt 的 ath79 target 支持突然能正常在草民的那台魔改过的 wr703n 上启动了，于是重新收拾了它一下，build 了一个目前认为足够稳定的版本，采取的是之前的使用方案。目前除了 usb 口没有供电之外一切正常，那玩意儿上的 usb 我也不用索性就不管它了。
+原来的 wr703n 因为最近 openwrt 的 ath79 target 突然能正常在草民的那台魔改过的 wr703n 上启动了，于是重新收拾了它一下，build 了一个目前认为足够稳定的版本，采取的是之前的使用方案。目前除了 usb 口没有供电之外一切正常，那玩意儿上的 usb 我也不用索性就不管它了。
 
-新买的 virmach 因为是 Windows Server 2008 所以一直没什么用，v2ray 有 Windows 服务端而且似乎十分好用，在上面用 v2ray 服务端提供了 shadowsocks 和 mtproxy 两种协议，目前使用体验只能说凑合吧，用来应急之类的足够了，毕竟那台 virmach 的机器确实网络也不怎么好。
+新买的 virmach 因为是 Windows Server 2008 所以一直没什么用。v2ray 有 Windows 服务端而且似乎十分好用，在上面用 v2ray 服务端提供了 shadowsocks 和 mtproxy 两种协议，目前使用体验只能说凑合吧，用来应急之类的足够了，毕竟那台 virmach 的机器确实网络也不怎么好。
 
 目前草民的 5 个 vps 中三个稳定用来提供不同用途的梯子，剩下两个，一个是腾讯云重庆机房只用来内网穿透，另一个由于 ip 不固定且配置也不高，用来跑 tg 机器人和备用的内网穿透。
 
@@ -429,7 +429,7 @@ ss 的 cpu 占用率本来就不高，这样调整完之后客户端低了一点
 
 ![](../assets/images/broken-ladders/optimization-kcptun-aggressive.png)
 
-对这些参数稍作修改就可以达到带宽增加近 50% 的效果，而且这里只是随便找了一组参数填写进去，如果针对自己特定的网络环境再仔细调整，效果可能还会更好。当然了，调整这些参数说白了是个体力活，而且每次调整完参数，重启 kcptun udp2raw 什么的，重新完成握手都要花将近一分钟的时间，想得到最佳效果需要颇花些工夫。草民因为目前感觉已经差不多稳了，所以就没有再进行进一步的仔细调整。至于详细的调整方案，可以看上面的 issue 里面的介绍，会有更详细的根据 snmp dump 中的数据以及 udp 丢包率等进行计算的方法。
+这里的示例更多的只是想说明，默认情况下的参数并不一定是推荐参数，对这些参数稍作修改就可以达到带宽增加近 50% 的效果，而且这里只是随便填写了一组参数进去，如果针对自己特定的网络环境再仔细调整，效果可能还会更好。当然了，调整这些参数说白了是个体力活，而且每次调整完参数，重启 kcptun udp2raw 什么的，重新完成握手都要花将近一分钟的时间，想得到最佳效果需要颇花些工夫。草民因为目前感觉已经差不多稳了，所以就没有再进行进一步的仔细调整。至于详细的调整方案，可以看上面的 issue 里面的介绍，会有更详细的根据 snmp dump 中的数据以及 udp 丢包率等进行计算的方法。
 
 ## Still a Weird Problem There
 
@@ -466,7 +466,11 @@ sysctl: cannot stat /proc/sys/net/ipv4/tcp_fastopen: No such file or directory
 
 而且实际上我的传输是通过 udp2raw + kcptun 进行的，gfw 并不太可能在这个过程中伪造一个 rst 包，处理成 udp2raw + kcptun 封包然后发送到两端，因此 ss 看到的 connection reset 基本不可能是 gfw 导致的。
 
-所以这个问题还是很奇怪。目前只能怀疑 shadowsocks-libev 在哪里的实现可能有问题了。
+所以这个问题还是很奇怪。目前只能怀疑 shadowsocks-libev 在哪里的实现可能有问题了。于是又搜索了一下 shadowsocks-libev 的 issues： [https://github.com/shadowsocks/shadowsocks-libev/issues/1038](https://github.com/shadowsocks/shadowsocks-libev/issues/1038)
+
+> BTW, `server recv: Connection reset by peer` means the client connected to your ss-redir closes the connection actively.
+
+也就是说这个报错是从客户端到 ss-redir 的连接被客户端主动断开，而不是 ss-redir 到 ss-server 之间的连接断开。如果这样的话，那似乎更可能是因为 ss 转发的时候可能在数据上出现了错误，导致客户端需要主动断开。这个暂时还不是很确定，因此未再做尝试，后面可能会再仔细研究。
 
 # V2Ray
 
