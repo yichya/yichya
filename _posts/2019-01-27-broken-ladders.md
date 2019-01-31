@@ -60,7 +60,7 @@ kcptun 在正常情况下是非常理想的：
 * 使用前向纠错，延迟低
 * 连接稳定性比起容易吃 gfw rst 的 TCP 来说更好
 
-但是中间断流的问题非常让人难受。但是也不知道是为什么会断流，这就更让人难受。
+但是中间断流的问题非常让人难受。而且也不知道是为什么会断流，这就更让人难受。
 
 后来大概是七月份，想在路由器上更好的集成 kcptun 因此想找一个 C / C++ 的实现。虽然没找到特别好的，但是却意外发现了下面这篇介绍 UDP QoS 的博客：
 
@@ -409,6 +409,8 @@ ss 的 cpu 占用率本来就不高，这样调整完之后客户端低了一点
 
 个人倾向于认为这里改变 ss 的加密算法实际上没有什么意义了，因为本来 ss 的 cpu 占用率就并不高，那么 CPU 的部分基本上也就压榨到这里。如果说还有什么可以提升的地方，个人觉得 udp2raw 的 aes-128-cbc 占用了比 ss 的 aes-256-gcm 高很多的 cpu，如果这些多占用的 cpu 资源真的全都被 udp2raw 用来加密的话那他的加密实现肯定是有问题的，这里应该是一个很好的优化点，后续直接改为使用 libsodium 应该是最好的。
 
+后来又仔细看了 udp2raw-tunnel 的代码，发现里面原来是有一个硬件加速的 aes 实现的，使用的方式就非常粗暴的是通过在 Makefile 里面写不同的 target 链接不同的文件来做 = = 虽然确实是 Makefile 的正确用法，但是还是感觉贼难受。目前服务端换成了作者提供的预先编译好的支持硬件 aes 的版本，但是实际用下来也还是感觉没什么区别，CPU 占用率几乎没有变化。有时间打算换成 chacha20-ietf-poly1305 吧。
+
 ### More Aggressive Congestion Control
 
 默认情况下 kcptun 的拥塞控制还是不够激进，这里我们也可以尝试进行一些调整。看了 kcptun 里面关于调整参数的一些 issue（比如 [https://github.com/xtaci/kcptun/issues/251](https://github.com/xtaci/kcptun/issues/251) [https://github.com/xtaci/kcptun/issues/137](https://github.com/xtaci/kcptun/issues/137)）。
@@ -474,7 +476,13 @@ sysctl: cannot stat /proc/sys/net/ipv4/tcp_fastopen: No such file or directory
 
 # V2Ray
 
-## MTProxy
+前面讲了为什么会打算尝试 V2Ray。只能说 shadowsocks-libev 的实现实在是并不让人开心，感觉目前唯一能吸引草民的也就是足够好用的透明代理，至于它自己的传输层，不能支持 UDP over TCP，又有奇怪的 Connection Reset 问题，感觉实在是无法让人愉悦的使用。
+
+因为目前其实可选的梯子方案基本上也就只有 shadowsocks、魔改 shadowsocks、openvpn 还有 v2ray；魔改 openvpn 实在也不怎么让人放心，于是还是转投了 Project V 阵营。
+
+V2Ray 的主要协议 VMess 最大的好处在于完全运行在 TCP 上，这样在 UDP QoS 普遍非常严重的情况下，比起 shadowsocks 来说 V2Ray 就友好得多。目前草民在手机上使用，体验很好，之前使用 shadowsocks 时域名解析的各种超时之类问题全都没有再出现过。
+
+## Server Problen
 
 ## Client Problem
 
