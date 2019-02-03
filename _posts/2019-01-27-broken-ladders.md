@@ -472,7 +472,17 @@ sysctl: cannot stat /proc/sys/net/ipv4/tcp_fastopen: No such file or directory
 
 > BTW, `server recv: Connection reset by peer` means the client connected to your ss-redir closes the connection actively.
 
-也就是说这个报错是从客户端到 ss-redir 的连接被客户端主动断开，而不是 ss-redir 到 ss-server 之间的连接断开。如果这样的话，那似乎更可能是因为 ss 转发的时候可能在数据上出现了错误，导致客户端需要主动断开。这个暂时还不是很确定，因此未再做尝试，后面可能会再仔细研究。
+也就是说这个报错是从客户端到 ss-redir 的连接被客户端主动断开，而不是 ss-redir 到 ss-server 之间的连接断开。如果这样的话，那似乎更可能是因为 ss 转发的时候可能在数据上出现了错误，导致客户端需要主动断开。
+
+为了对此进行验证，我选了一个比较 trick 的方法。我在 NAS Host 上搭了一个 V2Ray 实例，它的 InBound 是 shadowsocks 和 socks5，OutBound 是 VMess。
+
+```
+client <- tproxy -> ss-redir <- ss -> v2ray {[socks5, ss-server], vmess} <- vmess -> v2ray {vmess, freedom}
+```
+
+我通过 socks5 确定了 V2Ray 的 VMess 不会有莫名其妙出现断开连接的情况，然后把 ss-redir 配置为使用这个 shadowsocks，也就是说 ss 客户端和服务端是在同一个 192.168.1.0/24 里面的，甚至它们之间只有一个虚拟网桥。然后，非常不意外的，系统日志中依然有非常大量的 Connection Reset = =
+
+考虑到 V2Ray 可以支持 dokodemo-door 实现一个跟 ss-redir 完全一致的透明代理，我认真的开始考虑彻底抛弃 shadowsocks 转而只使用 V2Ray。
 
 # V2Ray
 
