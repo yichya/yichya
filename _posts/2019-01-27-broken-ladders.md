@@ -13,24 +13,6 @@ tags:
 
 标题叫「Broken Ladders」的原因其实也是感觉未来会越来越悲观。
 
-# Overview
-
-上个月由于拿搬瓦工那台 VPS 下 Steam 下北邮人 PT 之类，500GB 的流量在距离结算日还有两周的时候就用到只剩不到 100GB 了，一下就慌了。然后想起来还有另外一台有 ss + kcptun 的机器，虽然配置不高网络也不怎么好，不过还勉强可以苟一下。刚接上发现其实速度还挺快，看 YouTube 跟搬瓦工那台比完全不逊色，于是直接切过去用了。
-
-用了几天，发现经常看着看着 YouTube 梯子就挂了，然后意识到大概是吃了 UDP QoS。上网搜解决方案，有调整 kcptun 参数的方案，也有在 UDP 包前面加 TCP 头伪装成 TCP 的黑魔法方案。尝试了一下第二种也就是 udp2raw-tunnel，效果确实不错，除了带宽降低到了之前的一半不到 = = 
-
-后来看教程又对 kcptun、udp2raw 还有 ss 进行了一些调优，带宽回到了正常状态，于是这就是目前草民在使用的方案了。顺便对这台机器的配置进行了升级，原来 6 美元一年的配置升到了 8 美元一年，内存翻倍，拿来看 YouTube 1080p 反正基本没什么问题，也可以支持草民正常的 Google、GitHub 等操作，于是很愉快。
-
-原来的搬瓦工也不再用来当主力梯子了，基本上只用来继续支持手机 4g 梯子 + 内网穿透 + IPv6 下北邮人 PT。因为 shadowsocks-android 和 shadowsocks-libev 不支持 UDP over TCP，UDP 转发也是通过 UDP 传输的，这样导致在 UDP 丢包率比较高的环境下 UDP 转发非常成问题，体现就是在手机上连 DNS 转发都不能用，非常令人恼火。索性彻底拆了这台机器上的 ss 服务端。然后转而决定尝试 v2ray。尝试 v2ray 的过程又遇到了客户端上的其他的一些问题，不过还好影响不大，后面细谈。
-
-原来的 wr703n 因为最近 openwrt 的 ath79 target 突然能正常在草民的那台魔改过的 wr703n 上启动了，于是重新收拾了它一下，build 了一个目前认为足够稳定的版本，采取的是之前的使用方案。目前除了 usb 口没有供电之外一切正常，那玩意儿上的 usb 我也不用索性就不管它了。
-
-新买的 virmach 因为是 Windows Server 2008 所以一直没什么用。v2ray 有 Windows 服务端而且似乎十分好用，在上面用 v2ray 服务端提供了 shadowsocks 和 mtproxy 两种协议，目前使用体验只能说凑合吧，用来应急之类的足够了，毕竟那台 virmach 的机器确实网络也不怎么好。
-
-目前草民的 5 个 vps 中三个稳定用来提供不同用途的梯子，剩下两个，一个是腾讯云重庆机房只用来内网穿透，另一个由于 ip 不固定且配置也不高，用来跑 tg 机器人和备用的内网穿透。
-
-下面来详细谈一谈最近在这些方案上踩的坑吧。
-
 # UDP QoS & udp2raw-tunnel
 
 目前 nas 上使用的主力方案是这样。至于为什么最近才切换到这个方案，草民来简单介绍一下。
@@ -50,7 +32,9 @@ tags:
 
 后来大概二月还是三月份左右吧，搬瓦工可以换 ip 了。之前那台被照顾的机器终于又可以用了，于是长了个心眼，端口改成 443，加密改成 chacha20-ietf-poly1305，日常使用除了经常吃 rst（下面会说）之外基本不再有问题。用这种方式折腾到了大概四月底，然后搬到现在跟同事合租的屋子里面。中间回学校，没什么变动；毕业回来跟同事合租的房子，又过了一段时间把 Wi-Fi 连路由器的操作改为用 cat6 的网线，看 YouTube 的速度一下提升到了 20000kbit/s 以上，非常愉快。后面的一段时间基本上就是在优化 DNS 解析的流程，具体可以看上篇。
 
-这样就一直到了十二月，突然发现搬瓦工流量即将不够的时候，然后就是开头说的了。
+这样就一直到了十二月，由于拿搬瓦工那台 VPS 下 Steam 下北邮人 PT 之类，500GB 的流量在距离结算日还有两周的时候就用到只剩不到 100GB 了，一下就慌了。然后想起来还有另外一台有 ss + kcptun 的机器，虽然配置不高网络也不怎么好，不过还勉强可以苟一下。刚接上发现其实速度还挺快，看 YouTube 跟搬瓦工那台比完全不逊色，于是直接切过去用了。
+
+用了几天，发现经常看着看着 YouTube 梯子就挂了，然后意识到大概是吃了 UDP QoS。上网搜解决方案，有调整 kcptun 参数的方案，也有在 UDP 包前面加 TCP 头伪装成 TCP 的黑魔法方案。尝试了一下第二种也就是 udp2raw-tunnel，效果确实不错。
 
 ## UDP QoS 
 
@@ -58,7 +42,7 @@ kcptun 在正常情况下是非常理想的：
 
 * 比默认情况下的 TCP 采取更加激进的拥塞控制策略，有效带宽高
 * 使用前向纠错，延迟低
-* 连接稳定性比起容易吃 gfw rst 的 TCP 来说更好
+* 连接稳定性比起容易吃 gfw rst 的 TCP 来说更好（当然后面发现这应该是我的误解，具体后面谈）
 
 但是中间断流的问题非常让人难受。而且也不知道是为什么会断流，这就更让人难受。
 
@@ -477,12 +461,18 @@ sysctl: cannot stat /proc/sys/net/ipv4/tcp_fastopen: No such file or directory
 为了对此进行验证，我选了一个比较 trick 的方法。我在 NAS Host 上搭了一个 V2Ray 实例，它的 InBound 是 shadowsocks 和 socks5，OutBound 是 VMess。
 
 ```
-client <- tproxy -> ss-redir <- ss -> v2ray {[socks5, ss-server], vmess} <- vmess -> v2ray {vmess, freedom}
+client <- {tproxy} -> ss-redir <- {ss} -> v2ray ([socks5, ss-server), vmess) <- {vmess} -> v2ray ([vmess], freedom)
 ```
+
+* `client` / `ss-redir` / `v2ray` 代表传输过程经过的某一环节
+* `{tproxy` / `ss` / `vmess}` 代表传输过程中使用的协议
+* `v2ray ([inbound, ...], outbound)`
 
 我通过 socks5 确定了 V2Ray 的 VMess 不会有莫名其妙出现断开连接的情况，然后把 ss-redir 配置为使用这个 shadowsocks，也就是说 ss 客户端和服务端是在同一个 192.168.1.0/24 里面的，甚至它们之间只有一个虚拟网桥。然后，非常不意外的，系统日志中依然有非常大量的 Connection Reset = =
 
-考虑到 V2Ray 可以支持 dokodemo-door 实现一个跟 ss-redir 完全一致的透明代理，我认真的开始考虑彻底抛弃 shadowsocks 转而只使用 V2Ray。
+后来又看了几个 issue（比如 [https://github.com/shadowsocks/shadowsocks-libev/issues/1536#issuecomment-309941927](https://github.com/shadowsocks/shadowsocks-libev/issues/1536#issuecomment-309941927) 这个）。感觉这个设计着实比较迷，而且设计上采取这种方式断开连接的话更是让人对其协议的可靠性感到十分不放心。。。
+
+考虑了以上种种原因之后，草民决定认真尝试一下 V2Ray。
 
 # V2Ray
 
@@ -490,11 +480,460 @@ client <- tproxy -> ss-redir <- ss -> v2ray {[socks5, ss-server], vmess} <- vmes
 
 因为目前其实可选的梯子方案基本上也就只有 shadowsocks、魔改 shadowsocks、openvpn 还有 v2ray；魔改 openvpn 实在也不怎么让人放心，于是还是转投了 Project V 阵营。
 
-V2Ray 的主要协议 VMess 最大的好处在于完全运行在 TCP 上，这样在 UDP QoS 普遍非常严重的情况下，比起 shadowsocks 来说 V2Ray 就友好得多。目前草民在手机上使用，体验很好，之前使用 shadowsocks 时域名解析的各种超时之类问题全都没有再出现过。
+V2Ray 的主要协议 VMess 最大的好处在于可以运行在 TCP 上，也可以运行在 UDP 上，这样在 UDP QoS 普遍非常严重的情况下，比起 shadowsocks 来说 V2Ray 就友好得多。目前草民在手机上使用，体验很好，之前使用 shadowsocks 时域名解析的各种超时之类问题全都没有再出现过。
 
-## Server Problen
+## Server Problem
+
+草民在搬瓦工（Ubuntu 18.04）和 Virmach（Windows Server 2008 R2）上分别架了个 V2Ray 服务器。搬瓦工上面的一切正常，但是 Virmach 上面的那个却基本不能使用 VMess 协议。究其原因，Virmach 那台服务器的时间经常会迷之变慢，而且是持续变慢，而 VMess 协议要求客户端与服务器的时间差不能超过一分钟（[https://www.v2ray.com/developer/protocols/vmess.html](https://www.v2ray.com/developer/protocols/vmess.html) 中「认证信息」部分）。因此 Virmach 这台服务器现在只能用作备用 Shadowsocks 和主力 MTProxy。当然它实际上的主要用途是北邮人 PT 的 Seedbox，而且它的路由比较差，也很难指望它真的用来做主力梯子。
 
 ## Client Problem
+
+客户端方面的问题则比较奇怪。之前草民在主力 Android 手机上用「炼妖壶」开了两个空间，外部空间正常用，内部空间则放一些 Telegram 之类不那么和谐的 App，然后分别在两个空间内安装梯子客户端。之前使用 Shadowsocks 时这样使用完全没有问题，但是最近换用 V2Ray，遇到的问题是手机只启动一个 V2Ray 客户端的没有任何问题，但是如果同时启动两个的话，两个都不能正常工作。目前仍然是未解之谜，后来考虑草民很少使用炼妖壶，所以直接把炼妖壶拆掉了，平时只运行一个 V2Ray。目前尚好。
+
+## Performance Degraded
+
+草民在 OpenVZ 那台 VPS 上同样也架设了 V2Ray，并且直接使用了 V2Ray 提供的 mKCP 协议，替代原来的 kcptun + shadowsocks，udp2raw 仍然保留。但是 mKCP 似乎不像 kcptun 那样拥有前向纠错等功能，性能调整余地很小。实际使用下来，V2Ray 的 mkcp 应该只有之前调教好的 kcptun 一半的带宽，不过仍然可以勉强满足草民看 YouTube 的需求。
+
+希望后面 V2Ray 可以把 mKCP 的前向纠错功能也加上。
+
+# V2Ray dokodemo-door TProxy
+
+V2Ray 的入站除了普通的 socks 协议之外，还有一个类似于 ss-redir 的 dokodemo-door 模式 （[https://www.v2ray.com/chapter_02/protocols/dokodemo.html](https://www.v2ray.com/chapter_02/protocols/dokodemo.html)），可以像 ss-redir 一样搭配 iptables-mod-tproxy 实现透明代理。
+
+考虑到 V2Ray 可以支持 dokodemo-door 实现一个跟 ss-redir 完全一致的透明代理，我认真的开始考虑彻底抛弃 shadowsocks 转而只使用 V2Ray。
+
+## Filtering
+
+透明代理的原理其实很简单：网关 iptables 拦截所有数据包，然后依照规则匹配转发路径；透明代理通过添加一组规则，把部分数据包转发到一个隧道（在我们这里就是 ss-redir 或者 dokodemo-door）上，其他不匹配规则的数据包则正常发送。转发的事情其实非常容易理解，毕竟梯子天生就是干这种事儿的；但是匹配规则的事情，就稍微有那么一点复杂了。
+
+之前的透明代理方案，无论是 chnroute 还是 gfwlist，使用的方式都是由 iptables 来决定如何匹配，在这里决定哪些地址需要转发的是  iptables-mod-ipset。这么做的原因其实也很简单：ss-redir 本身没有按照规则进行匹配的功能。但是 V2Ray 可以通过 GeoIP 智能决定哪些需要进行转发，这样这里就需要进行选择：是由 ipset 来做匹配还是直接用 V2Ray 做更好。
+
+### V2Ray GeoIP Implementation
+
+直接看代码（`v2ray.com/core/app/router/condition_geoip.go:17`）。匹配部分的代码都在这儿。
+
+```go
+type GeoIPMatcher struct {
+    countryCode string
+    ip4         []uint32
+    prefix4     []uint8
+    ip6         []ipv6
+    prefix6     []uint8
+}
+
+func normalize4(ip uint32, prefix uint8) uint32 {
+    // 这个其实就是把 prefix 后面的位置都搞成 0，子网掩码大家懂吧
+    return (ip >> (32 - prefix)) << (32 - prefix)
+}
+
+func (m *GeoIPMatcher) match4(ip uint32) bool {
+    // 对于 Slice 来讲 len 是个预先存好的常量，问题不大
+    if len(m.ip4) == 0 {
+        return false
+    }
+
+    if ip < m.ip4[0] {
+        return false
+    }
+
+    size := uint32(len(m.ip4))
+    l := uint32(0)
+    r := size
+    for l < r {
+        // 右移一位相当于就是除以 2
+        x := ((l + r) >> 1)
+        // 这里有个前提，在初始化上面那个 Slice 的时候会有一个排序
+        // 此处这个 Slice 是排序好的
+        // 这个判断非常明显就是二分查找了
+        if ip < m.ip4[x] {
+            r = x
+            continue
+        }
+        
+        nip := normalize4(ip, m.prefix4[x])
+        if nip == m.ip4[x] {
+            return true
+        }
+
+        l = x + 1
+    }
+
+    return l > 0 && normalize4(ip, m.prefix4[l-1]) == m.ip4[l-1]
+}
+```
+
+粗看代码应该是个二分查找的操作，感觉性能应该还是可以接受的。
+
+### IPTables and IPSet
+
+IPTables 在某些程度上几乎可以说是臭名昭著了。规则以链表的方式组织，搜索成本可想而知。（请记住这个结论）
+
+IPSet 作为 IPTables 的插件，它的实现（[https://github.com/Olipro/ipset/tree/master/kernel/net/netfilter/ipset](https://github.com/Olipro/ipset/tree/master/kernel/net/netfilter/ipset)）粗看（其实草民只看了文件名根本没看代码）应该是使用了 Hashmap 和 Bitmap 做加速，实际性能应该还是很不错的。
+
+### Other Perspective
+
+性能方面仅凭 Code Review 感觉其实差别并不会很大（考虑到规则的量级，chnroute 目前不到 9000 行，那么二分查找最多也就匹配十几遍，至少可以认为都很快），但其实上面都只是推测，实际性能肯定还是应该上 iperf 之类的来压一压看看。不过目前需要先把功能都实现完全，测试后面补上。
+
+这里再另外考虑一个可能存在的权衡点：内核空间到用户空间。IPSet 整个在内核空间里面，不涉及到用户空间的复制，对于不需要转发的情况来说肯定比 V2Ray 要快，对于私有地址这种规则明确（就那么十几条）、毫无疑问不需要转发、对性能要求最高的情况，即使 V2Ray 可以支持也还是尽量由 IPSet 来完成。
+
+### Solution
+
+找了一些现有的 LuCI V2Ray 的实现，对于透明代理的设计基本是这样的：私有地址用 IPSet，其他的统一用 V2Ray 来转发，在 V2Ray 里面用 GeoIP 做区分。比如目前我在用的 [https://github.com/lijunjie-vip/luci-app-v2ray](https://github.com/lijunjie-vip/luci-app-v2ray) 就是一个采取这样方案的设计。
+
+但是上面这一个仓库的设计并不是特别的好，它缺少自定义哪些地址走代理哪些不走的功能。从我自己的角度来讲，我用 udp2raw 所以 V2Ray 上面的服务端 IP 实际上是 127.0.0.1，这个仓库里面的脚本虽然会自动添加服务端 IP 到不代理的 IPSet 中，但是仅在我的使用场景来说这个功能并不能正常工作；我还有其他的一些线路非常好的 VPS，访问它们的时候我并不希望过透明代理。
+
+考虑到这些问题，我另外又选择了一个跟之前的 ss 相似的一个 LuCI 界面（[https://github.com/techotaku/luci-app-transparent-proxy](https://github.com/techotaku/luci-app-transparent-proxy)）。它可以负责配置基于 IPSet 的透明代理规则，而我们实际使用的 V2Ray 只负责打开 Redirect 端口就可以了。于是删掉了其中跟设置 IPTables 规则相关的全部代码，顺便把启动方式改为 procd。
+
+然而上面那个透明代理的 LuCI 还不能直接使用。IPTables 是个相当复杂而且设计十分奇特的东西，其中坑相当多 = =
+
+### Proxy Loopback Problem
+
+对于透明代理来说，我们的使用场景是这样：
+
+1. iptables 匹配：地址是私有地址则直接转发，否则通过 redirect 进 V2Ray
+2. V2Ray 匹配：地址是 geoip:cn 则直接转发，否则通过 V2Ray 转发
+3. V2Ray 出数据包不经过 iptables，直接转发
+
+于是这里就出现了问题：实际上第三步出来的数据包还是会进入 iptables 做匹配，也就是说 （3）实际上会回到（1），但是 V2Ray 匹配结果是 geoip:cn 的数据包不应该再经过 iptables 转发回到 V2Ray，否则这些包就会陷入死循环。但是我们怎么判断一个数据包是 V2Ray 匹配到是 geoip:cn 出来直接转发的呢？
+
+V2Ray 提供了 mark 的功能，也就是说 V2Ray 可以在出数据包上增加一个标记，这个标记的值可以设置，这里直接写死了 255（`0xff`）。比如下面是 freedom 的配置：
+
+```json
+{
+    "streamSettings": {
+        "sockopt": {
+            "mark": 255
+        }
+    },
+    "settings": {
+        "keep": ""
+    },
+    "protocol": "freedom",
+    "tag": "direct"
+}
+```
+
+然后在 iptables 里面可以根据这个标记做匹配：
+
+```sh
+iptables -t nat -A V2RAY -p tcp -j RETURN -m mark --mark 0xff
+```
+
+luci-app-v2ray 里面是正确写了这个规则的，但是 luci-app-transparent-proxy 里面没有写，得加上。这个规则加的位置又有需要注意的地方：必须把它放在 REDIRECT 规则前面，否则会先被 REDIRECT 规则匹配到，然后又是死循环。还记得 IPTables 是链表嘛？
+
+```patch
+diff --git a/files/root/usr/bin/transparent-proxy-rules b/files/root/usr/bin/transparent-proxy-rules
+index e773280..685be9c 100644
+--- a/files/root/usr/bin/transparent-proxy-rules
++++ b/files/root/usr/bin/transparent-proxy-rules
+@@ -72,8 +72,8 @@ EOF
+ ipt_nat() {
+        include_ac_rules nat
+        ipt="iptables -t nat"
++       $ipt -A TP_SPEC_WAN_FW -p tcp -j RETURN -m mark --mark 0xff
+        $ipt -A TP_SPEC_WAN_FW -p tcp -j REDIRECT --to-ports $local_port || return 1
+        if [ -n "$OUTPUT" ]; then
+                $ipt -N TP_SPEC_WAN_DG
+                $ipt -A TP_SPEC_WAN_DG -m set --match-set tp_spec_dst_sp dst -j RETURN
+```
+
+## DNS Whitelist
+
+架梯子这种事情，保证 DNS 解析纯净当然是重中之重。起初我的想法是沿用之前的白名单方案，白名单直接走 114.114.114.114，其他部分则用 V2Ray 架一个 DNS 隧道转发到 208.67.220.220 这样。这个操作非常简单就可以完成，只需要一个下面这样的 inbound：
+
+```json
+{
+    "port": "5353",
+    "protocol": "dokodemo-door",
+    "settings": {
+        "port": 443,
+        "network": "tcp,udp",
+        "address": "208.67.220.220"
+    }
+}
+```
+
+实际用这个感觉也没什么问题，跟之前基本上一样，而且不再需要用 dns-forwarder 把 UDP 转成 TCP 去处理 shadowsocks 不支持 UDP over TCP 带来的一系列问题。
+
+后来发现 V2Ray 其实是有一个内置的 DNS 解析器的，而且它内置有一个 GeoSite 规则，很类似于之前使用的白名单。于是这里又有了选择点。
+
+### V2Ray DNS Server
+
+V2Ray 在前两天发布的 4.15 版本正式把 DNS 服务器作为了一个可选功能开放，于是干脆试一试。然而文档语焉不详，也没有可以参考的例子，尝试的过程十分艰难。这里直接说我摸索出来的结论是怎么样的。
+
+非常奇怪的是 DNS 在 V2Ray 的设计中是一个 outbound，是用来拦截 DNS 请求并转发到内置的 DNS 解析器的，而内置的 DNS 解析器在这里又充当了 inbound 的角色。个人不太理解为什么这么设计，不过能看明白这个，后面的事情就很简单。
+
+inbound 还是上面那个，加一个 tag 叫 `dns_inbound` 后面写 routing 的时候用。
+
+```json
+{
+    "port": 15353,
+    "protocol": "dokodemo-door",
+    "settings": {
+        "port": 443,
+        "network": "tcp,udp",
+        "address": "208.67.220.220"
+    },
+    "tag": "dns_inbound"
+}
+```
+
+outbound 就是一个 dns，没有什么设置，给一个 tag 就行了：
+
+```json
+{
+    "protocol": "dns",
+    "settings": {},
+    "tag": "dns_outbound"
+}
+```
+
+然后写一个 routing 把 `dns_inbound` 转发到 `dns_outbound`：
+
+```json
+{
+    "type": "field",
+    "inboundTag": [
+        "dns_inbound"
+    ],
+    "outboundTag": "dns_outbound"
+},
+```
+
+然后添加 `dns_object`，在这里定义 geosite:cn 走 114.114.114.114，其他的走 208.67.220.220。也给一个 tag 叫 `dns_object`：
+
+```json
+{
+    "dns": {
+        "servers": [
+            "208.67.220.220",
+            {
+                "address": "114.114.114.114",
+                "port": 53,
+                "domains": [
+                    "geosite:cn"
+                ]
+            }
+        ],
+        "clientIp": "202.99.166.4",
+        "tag": "dns_object"
+    }
+}
+```
+
+这里非常奇怪的是必须把 208.67.220.220 写在 114.114.114.114 上面，否则即使不在 geosite:cn 里面的域名也会被 dispatch 到 114.114.114.114 上面，原因尚不明确：
+
+```
+2019/02/10 17:18:31 [Debug] v2ray.com/core/app/log: Logger started
+2019/02/10 17:18:31 [Warning] v2ray.com/core: V2Ray 4.15.0 started
+2019/02/10 17:18:33 [Debug] [3518282463] v2ray.com/core/proxy/dokodemo: processing connection from: 127.0.0.1:47771
+2019/02/10 17:18:33 [Info] [3518282463] v2ray.com/core/app/dispatcher: taking detour [dns_outbound] for [tcp:208.67.222.222:443]
+2019/02/10 17:18:33 [Debug] v2ray.com/core/app/dns: querying DNS for: www.youtube.com.
+2019/02/10 17:18:33 [Debug] v2ray.com/core/transport/internet/udp: dispatch request to: udp:114.114.114.114:53
+2019/02/10 17:18:33 [Info] v2ray.com/core/transport/internet/udp: establishing new connection for udp:114.114.114.114:53
+2019/02/10 17:18:33 [Info] v2ray.com/core/app/dispatcher: taking detour [direct] for [udp:114.114.114.114:53]
+2019/02/10 17:18:33 [Info] v2ray.com/core/proxy/freedom: opening connection to udp:114.114.114.114:53
+2019/02/10 17:18:33 [Debug] v2ray.com/core/app/dns: updating IP records for domain:www.youtube.com.
+2019/02/10 17:18:41 [Info] v2ray.com/core/app/proxyman/outbound: failed to process outbound traffic > v2ray.com/core/proxy/freedom: connection ends > context canceled
+2019/02/10 17:18:41 [Info] v2ray.com/core/transport/internet/udp: failed to handle UDP input > io: read/write on closed pipe
+```
+
+按照上面的理解，实际上 `dns_outbound` 会自动转发到 `dns_object`，而 `dns_object` 实际上是一个 inbound。这个 inbound 可能会请求 114.114.114.114 和 208.67.220.220 两个地址，那么我们针对这两个地址增加两条 routing 设置它们分别走直接转发和通过 V2Ray 转发：
+
+```json
+{
+    "ip": [
+        "geoip:cn"
+    ],
+    "type": "field",
+    "inboundTag": [
+        "dns_object"
+    ],
+    "outboundTag": "direct"
+},
+{
+    "type": "field",
+    "inboundTag": [
+        "dns_object"
+    ],
+    "outboundTag": "proxy"
+}
+```
+
+配置到这里就完事儿了。可以尝试一下。
+
+解析一个不在 geosite:cn 中的域名：
+
+```
+> dig @127.0.0.1 -p 15353 www.youtube.com +tcp
+
+; <<>> DiG 9.11.3-1ubuntu1.3-Ubuntu <<>> @127.0.0.1 -p 15353 www.youtube.com +tcp
+; (1 server found)
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 36800
+;; flags: qr; QUERY: 0, ANSWER: 10, AUTHORITY: 0, ADDITIONAL: 0
+
+;; ANSWER SECTION:
+www.youtube.com.	600	IN	A	216.58.219.46
+www.youtube.com.	600	IN	A	216.58.217.206
+www.youtube.com.	600	IN	A	172.217.5.206
+www.youtube.com.	600	IN	A	172.217.11.174
+www.youtube.com.	600	IN	A	172.217.5.78
+www.youtube.com.	600	IN	A	172.217.14.110
+www.youtube.com.	600	IN	A	172.217.11.78
+www.youtube.com.	600	IN	A	172.217.14.78
+www.youtube.com.	600	IN	A	216.58.216.46
+www.youtube.com.	600	IN	A	216.58.193.206
+
+;; Query time: 612 msec
+;; SERVER: 127.0.0.1#15353(127.0.0.1)
+;; WHEN: Sun Feb 10 17:19:59 CST 2019
+;; MSG SIZE  rcvd: 322
+```
+
+跟直接 dig 对比：
+
+```
+> dig www.youtube.com
+
+; <<>> DiG 9.10.6 <<>> www.youtube.com
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 30725
+;; flags: qr rd ra; QUERY: 1, ANSWER: 12, AUTHORITY: 0, ADDITIONAL: 1
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 4096
+;; QUESTION SECTION:
+;www.youtube.com.		IN	A
+
+;; ANSWER SECTION:
+www.youtube.com.	86394	IN	CNAME	youtube-ui.l.google.com.
+youtube-ui.l.google.com. 294	IN	A	172.217.5.206
+youtube-ui.l.google.com. 294	IN	A	172.217.11.174
+youtube-ui.l.google.com. 294	IN	A	172.217.4.142
+youtube-ui.l.google.com. 294	IN	A	172.217.5.78
+youtube-ui.l.google.com. 294	IN	A	172.217.14.110
+youtube-ui.l.google.com. 294	IN	A	172.217.11.78
+youtube-ui.l.google.com. 294	IN	A	216.58.216.14
+youtube-ui.l.google.com. 294	IN	A	216.58.193.206
+youtube-ui.l.google.com. 294	IN	A	172.217.4.174
+youtube-ui.l.google.com. 294	IN	A	216.58.219.14
+youtube-ui.l.google.com. 294	IN	A	216.58.217.206
+
+;; Query time: 233 msec
+;; SERVER: 10.32.15.1#53(10.32.15.1)
+;; WHEN: Sun Feb 10 17:26:42 CST 2019
+;; MSG SIZE  rcvd: 254
+```
+
+解析一个在 geosite:cn 中的域名：
+
+```
+> dig @127.0.0.1 -p 15353 www.bilibili.com +tcp
+
+; <<>> DiG 9.11.3-1ubuntu1.3-Ubuntu <<>> @127.0.0.1 -p 15353 www.bilibili.com +tcp
+; (1 server found)
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 16220
+;; flags: qr; QUERY: 0, ANSWER: 16, AUTHORITY: 0, ADDITIONAL: 0
+
+;; ANSWER SECTION:
+www.bilibili.com.	600	IN	A	120.92.107.177
+www.bilibili.com.	600	IN	A	119.3.234.165
+www.bilibili.com.	600	IN	A	120.92.108.182
+www.bilibili.com.	600	IN	A	119.3.229.89
+www.bilibili.com.	600	IN	A	119.3.227.169
+www.bilibili.com.	600	IN	A	117.50.11.92
+www.bilibili.com.	600	IN	A	120.92.50.129
+www.bilibili.com.	600	IN	A	119.3.238.64
+www.bilibili.com.	600	IN	A	120.92.113.99
+www.bilibili.com.	600	IN	A	120.92.83.126
+www.bilibili.com.	600	IN	A	117.50.8.201
+www.bilibili.com.	600	IN	A	106.75.118.115
+www.bilibili.com.	600	IN	A	106.75.74.76
+www.bilibili.com.	600	IN	A	117.50.8.170
+www.bilibili.com.	600	IN	A	120.92.78.97
+www.bilibili.com.	600	IN	A	120.92.82.179
+
+;; Query time: 10 msec
+;; SERVER: 127.0.0.1#15353(127.0.0.1)
+;; WHEN: Sun Feb 10 17:20:05 CST 2019
+;; MSG SIZE  rcvd: 524
+```
+
+跟直接 dig 对比：
+
+```
+> dig www.bilibili.com
+
+; <<>> DiG 9.10.6 <<>> www.bilibili.com
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 22568
+;; flags: qr rd ra; QUERY: 1, ANSWER: 17, AUTHORITY: 0, ADDITIONAL: 1
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 4096
+;; QUESTION SECTION:
+;www.bilibili.com.		IN	A
+
+;; ANSWER SECTION:
+www.bilibili.com.	31	IN	CNAME	interface.biliapi.com.
+interface.biliapi.com.	170	IN	A	119.3.227.169
+interface.biliapi.com.	170	IN	A	120.92.107.177
+interface.biliapi.com.	170	IN	A	120.92.50.129
+interface.biliapi.com.	170	IN	A	106.75.118.115
+interface.biliapi.com.	170	IN	A	119.3.234.165
+interface.biliapi.com.	170	IN	A	120.92.78.97
+interface.biliapi.com.	170	IN	A	117.50.8.201
+interface.biliapi.com.	170	IN	A	120.92.83.126
+interface.biliapi.com.	170	IN	A	119.3.238.64
+interface.biliapi.com.	170	IN	A	106.75.74.76
+interface.biliapi.com.	170	IN	A	120.92.82.179
+interface.biliapi.com.	170	IN	A	120.92.113.99
+interface.biliapi.com.	170	IN	A	120.92.108.182
+interface.biliapi.com.	170	IN	A	117.50.11.92
+interface.biliapi.com.	170	IN	A	119.3.229.89
+interface.biliapi.com.	170	IN	A	117.50.8.170
+
+;; Query time: 16 msec
+;; SERVER: 10.32.15.1#53(10.32.15.1)
+;; WHEN: Sun Feb 10 17:26:30 CST 2019
+;; MSG SIZE  rcvd: 333
+```
+
+对比来看，可以发现 V2Ray 解析的结果中没有 CNAME 记录。根据文档来看，V2Ray 的解析只能返回 A 或者 AAAA，CNAME 这种的不会出现在结果中。个人觉得影响不大，可以忽略。
+
+### Another Weird Problem
+
+理论上来讲配置到这儿应该已经没有什么问题了，但是我始终不能正常把 V2Ray 直接作为 dnsmasq 的上游服务器，所有查询似乎都被丢弃了。在中间插了一个 dns-forwarder 也无济于事。日志中可以看到所有的 DNS 请求似乎都超时了：
+
+```
+2019/02/10 17:40:11 [Info] v2ray.com/core/app/dns: failed to lookup ip for domain www.bilibili.com at server udp:114.114.114.114:53 > context deadline exceeded
+2019/02/10 17:40:11 [Info] v2ray.com/core/proxy/dns: ip query > v2ray.com/core/app/dns: returning nil for domain www.bilibili.com > context deadline exceeded
+2019/02/10 17:40:11 [Info] v2ray.com/core/app/dns: failed to lookup ip for domain apple.com at server udp:114.114.114.114:53 > context deadline exceeded
+2019/02/10 17:40:11 [Info] v2ray.com/core/app/dns: failed to lookup ip for domain www.icloud.com at server udp:114.114.114.114:53 > context deadline exceeded
+2019/02/10 17:40:11 [Info] v2ray.com/core/proxy/dns: ip query > v2ray.com/core/app/dns: returning nil for domain apple.com > context deadline exceeded
+2019/02/10 17:40:11 [Info] v2ray.com/core/proxy/dns: ip query > v2ray.com/core/app/dns: returning nil for domain www.icloud.com > context deadline exceeded
+2019/02/10 17:40:11 [Info] v2ray.com/core/app/dns: failed to lookup ip for domain bing.com at server udp:114.114.114.114:53 > context deadline exceeded
+2019/02/10 17:40:11 [Info] v2ray.com/core/proxy/dns: ip query > v2ray.com/core/app/dns: returning nil for domain bing.com > context deadline exceeded
+2019/02/10 17:40:12 [Info] v2ray.com/core/app/dns: failed to lookup ip for domain beacons3.gvt2.com at server udp:114.114.114.114:53 > context deadline exceeded
+2019/02/10 17:40:12 [Info] v2ray.com/core/proxy/dns: ip query > v2ray.com/core/app/dns: returning nil for domain beacons3.gvt2.com > context deadline exceeded
+```
+
+但是直接用 dig 查询的时候完全不会有这个 Timeout 的问题。而且看 V2Ray 的代码，查询的超时是固定值 4s（硬编码改不了），也不存在超时太短的问题。目前只能认为 V2Ray 的 DNS 实现存在问题 / 不规范的地方，dnsmasq 构造的查询与 V2Ray 不兼容。因此只能暂时放弃使用 V2Ray GeoSite 的方案，转为使用之前的方案。具体哪里不规范草民也没有精力仔细去排查了 = =
+
+另外也可以发现 V2Ray 的这个 dns 查询似乎比直接转发要慢。从我个人的感受来讲这确实不是偶然现象，也与缓存什么的无关，它就是慢。匪夷所思的慢。
+
+## Customized Projects
+
+草民改动过的两个仓库都在 GitHub 上。还在考虑把 Socks 和 HTTPS 代理的功能加上，另外也可能会尝试使用一下 V2Ray 的反向代理用来替代 ngrokc，近期应还会再进行一些维护。
+
+* [https://github.com/yichya/luci-app-v2ray](https://github.com/yichya/luci-app-v2ray)
+* [https://github.com/yichya/luci-app-transparent-proxy](https://github.com/yichya/luci-app-transparent-proxy)
 
 # Finally
 
