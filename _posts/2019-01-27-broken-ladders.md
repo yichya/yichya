@@ -490,11 +490,37 @@ V2Ray 的主要协议 VMess 最大的好处在于可以运行在 TCP 上，也�
 
 客户端方面的问题则比较奇怪。之前草民在主力 Android 手机上用「炼妖壶」开了两个空间，外部空间正常用，内部空间则放一些 Telegram 之类不那么和谐的 App，然后分别在两个空间内安装梯子客户端。之前使用 Shadowsocks 时这样使用完全没有问题，但是最近换用 V2Ray，遇到的问题是手机只启动一个 V2Ray 客户端的没有任何问题，但是如果同时启动两个的话，两个都不能正常工作。目前仍然是未解之谜，后来考虑草民很少使用炼妖壶，所以直接把炼妖壶拆掉了，平时只运行一个 V2Ray。目前尚好。
 
-## Performance Degraded
+## Performance Optimization
 
-草民在 OpenVZ 那台 VPS 上同样也架设了 V2Ray，并且直接使用了 V2Ray 提供的 mKCP 协议，替代原来的 kcptun + shadowsocks，udp2raw 仍然保留。但是 mKCP 似乎不像 kcptun 那样拥有前向纠错等功能，性能调整余地很小。实际使用下来，V2Ray 的 mkcp 应该只有之前调教好的 kcptun 一半的带宽，不过仍然可以勉强满足草民看 YouTube 的需求。
+草民在 OpenVZ 那台 VPS 上同样也架设了 V2Ray，并且直接使用了 V2Ray 提供的 mKCP 协议，替代原来的 kcptun + shadowsocks，udp2raw 仍然保留。但是 mKCP 似乎不像 kcptun 那样拥有前向纠错等功能，性能调整余地很小。
 
-希望后面 V2Ray 可以把 mKCP 的前向纠错功能也加上。
+一开始 uplink capacity 写错了，居然同时影响了 downlink，看 YouTube 速度奇慢无比，还是进行了 speedtest 发现上传几乎不动才意识到 uplink capactiy 是不是写太大了（100MB/s），调整之后（改为 10MB/s）速度正常了许多。
+
+V2Ray 的推荐是，对于客户端来说，downlink 可以设置很大，但是 uplink 最好是实际的速度到实际速度两倍之间。选择了几组数据进行了简单测试，但是因为网络环境并不是很稳定，似乎观察不出什么规律；而且同样是 10 / 10，前后隔了十分钟测试的结果差了近三分之一，所以也就仅供参考了。服务端这两个值都是 100，单位都是 MB/s。
+
+![](../assets/images/broken-ladders/v2ray-speedtest-5-10.png)
+
+_uplink = 5, downlink = 10_
+
+![](../assets/images/broken-ladders/v2ray-speedtest-5-100.png)
+
+_uplink = 5, downlink = 100_
+
+![](../assets/images/broken-ladders/v2ray-speedtest-10-10.png)
+
+_uplink = 10, downlink = 10_
+
+![](../assets/images/broken-ladders/v2ray-speedtest-10-20.png)
+
+_uplink = 10, downlink = 20_
+
+![](../assets/images/broken-ladders/v2ray-speedtest-10-100.png)
+
+_uplink = 10, downlink = 100_
+
+上面这个结果也就只能看看，并不是很严谨（虽然我尽量控制了变量，但是网络波动这种事情我也实在是无能为力）。目前选择的还是 uplink = 10，duwnlink = 10 的参数，基本与实际保持一致的同时，也与 udp2raw 的 sockbuf 大小，以及实际的物理链路带宽一致。感觉上没啥大问题，先这样用了。
+
+另外关于 V2Ray VMess 的加密方式，同样有 chacha20 和 aes 可选，关于这两种加密方式的实际影响前面已经谈过，这里就不再重复折腾了。
 
 # V2Ray dokodemo-door TProxy
 
@@ -905,7 +931,7 @@ interface.biliapi.com.	170	IN	A	117.50.8.170
 ;; MSG SIZE  rcvd: 333
 ```
 
-对比来看，可以发现 V2Ray 解析的结果中没有 CNAME 记录。根据文档来看，V2Ray 的解析只能返回 A 或者 AAAA，CNAME 这种的不会出现在结果中。个人觉得影响不大，可以忽略。
+从查询耗时可以看到白名单解析是按照预期工作的。与直接 dig 的结果进行对比来看，可以发现 V2Ray 解析的结果中没有 CNAME 记录。根据文档来看，V2Ray 的解析只能返回 A 或者 AAAA，CNAME 这种的不会出现在结果中。个人觉得影响不大，可以忽略。
 
 ### Another Weird Problem
 
@@ -924,7 +950,7 @@ interface.biliapi.com.	170	IN	A	117.50.8.170
 2019/02/10 17:40:12 [Info] v2ray.com/core/proxy/dns: ip query > v2ray.com/core/app/dns: returning nil for domain beacons3.gvt2.com > context deadline exceeded
 ```
 
-但是直接用 dig 查询的时候完全不会有这个 Timeout 的问题。而且看 V2Ray 的代码，查询的超时是固定值 4s（硬编码改不了），也不存在超时太短的问题。目前只能认为 V2Ray 的 DNS 实现存在问题 / 不规范的地方，dnsmasq 构造的查询与 V2Ray 不兼容。因此只能暂时放弃使用 V2Ray GeoSite 的方案，转为使用之前的方案。具体哪里不规范草民也没有精力仔细去排查了 = =
+但是直接用 dig 查询的时候完全不会有这个 Timeout 的问题。而且看 V2Ray 的代码，查询的超时是固定值 4s（硬编码改不了），也不存在超时太短的问题。目前只能认为 V2Ray 的 DNS 实现存在问题或者有不规范的地方，dnsmasq 构造的查询与 V2Ray 不兼容。因此只能暂时放弃使用 V2Ray GeoSite 的方案，转为使用之前的方案。具体哪里不规范草民也没有精力仔细去排查了 = =
 
 另外也可以发现 V2Ray 的这个 dns 查询似乎比直接转发要慢。从我个人的感受来讲这确实不是偶然现象，也与缓存什么的无关，它就是慢。匪夷所思的慢。
 
@@ -935,5 +961,20 @@ interface.biliapi.com.	170	IN	A	117.50.8.170
 * [https://github.com/yichya/luci-app-v2ray](https://github.com/yichya/luci-app-v2ray)
 * [https://github.com/yichya/luci-app-transparent-proxy](https://github.com/yichya/luci-app-transparent-proxy)
 
+另外，从软路由上去掉 ss 之后，也可以顺便去掉 libsodium，并且 mbedtls 也可以换成 openssl，愉快很多。
+
 # Finally
 
+最近越来越觉得，GFW 固然可怕，但是其实更可怕的是企业的自我审查。微博算是个很典型的例子，什么能搜什么搜不了，什么能上热搜什么上不了；有的微博莫名其妙的评论就消失了，转发就消失了，甚至连转发按钮都不知道哪儿去了。发一个「春节好无聊啊」结果被提示「包含敏感内容禁止发送」，属实魔幻。当然了，这个我们都理解，要恰饭的嘛。
+
+但是最近比较令我感到害怕的是微信。年前三家公司推出新的聊天 App 要围剿微信，结果微信把「违反法律法规」当成了用来进行不正当竞争的手段，当场封杀。关键是这招还特别好用，说你违规你就是违规，这帽子一扣比啥都有效。结合深圳南山法院之前的经典案例，除了能说一句「无耻」还能说什么呢。
+
+现在就感觉，墙内所有消息来源，要么遭遇 GFW 审查要么遭遇企业自我审查，微博随便点开一个就看不见评论转发，微信随便点开一个就是已被删除或者已被屏蔽，甚至都无法知道屏蔽的真实原因是什么。呵。呵。呵。照这么下去再推出新的聊天 App 还有啥意义？啥都发不出来，还在发什么东西上继续做文章没有任何意义。要我说真的好用的聊天 App 其实就是 Telegram，解决刚需，避免审查，而且没什么乱七八糟的东西，要是不需要绑定真实手机号就更完美了。
+
+其实为什么这篇要叫 Broken Ladders 呢。
+
+照这个趋势下去，总隐隐觉得要不了多久，墙内审查将会严格到基本只剩下正面消息或者娱乐至死那种消息，政治倾向不太正面的消息肯定封，触动资本利益的，看着不顺眼的，随便找个理由扣个帽子，照样封。而且最近已经多次听说有人因为什么「搭建私人信道访问国际互联网」这种狗屁理由被罚款写保证书甚至拘留了，再这么下去，架梯子？架个屁。
+
+行了，深夜胡言乱语就到这儿，我也不知道我上面几段都说了些啥，说不定明儿顺手就删了。
+
+今天是初七，要上班了啊。
