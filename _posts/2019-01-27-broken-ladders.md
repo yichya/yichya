@@ -536,7 +536,7 @@ V2Ray 的入站除了普通的 socks 协议之外，还有一个类似于 ss-red
 
 ### V2Ray GeoIP Implementation
 
-直接看代码（`v2ray.com/core/app/router/condition_geoip.go:17`）。匹配部分的代码都在这儿。
+直接看代码（[https://github.com/v2ray/v2ray-core/blob/master/app/router/condition_geoip.go](https://github.com/v2ray/v2ray-core/blob/master/app/router/condition_geoip.go)）。匹配部分的代码都在这儿。
 
 ```go
 type GeoIPMatcher struct {
