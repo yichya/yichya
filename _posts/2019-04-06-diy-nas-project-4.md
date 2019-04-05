@@ -200,9 +200,11 @@ index 3468899..8a55b1e 100644
 
 关于 Hyper-V 的直通，草民不再重新搭环境搞了，成本太高。直接参考 [https://lenovopress.com/lp0088.pdf](https://lenovopress.com/lp0088.pdf) 。
 
-### KVM 
+### KVM
 
 KVM 搞这个，其实可以说相当简单。
+
+![](../assets/images/diy-nas-project-4/kvm-pci-passthrough.png)
 
 ## 主机与虚拟机的网络配置
 
