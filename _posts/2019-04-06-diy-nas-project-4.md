@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  DIY NAS Project (4) Virtualization Practice
+title:  DIY NAS Project (4) Virtualization Practice & Some More
 categories:
   - Small Things
 tags:
@@ -11,37 +11,22 @@ tags:
   - virtualization
 ---
 
-这次对硬件的更新，除了考虑到原来的那块主板的 CPU 性能和网卡的数量之外，更多的还是包括想让这台设备拥有更加丰富的功能，尤其是狗东 618 买了投影之后，更主要的目的也包括让这台设备能够承担一些 HTPC 相关的工作。
+算是老坑扒出来，趁有时间重新认真填一下。
 
-这篇想谈一谈最近折腾 NAS 的过程中自己在虚拟化上面的一些实践。
+这篇东西最早是 2017 年年底写的，从那个时候到现在（2019 年清明），基本上这台 NAS 的方案就没有再有过什么大变化：
 
-<!-- more -->
+* 2.4GHz 的无线网卡最终换到了 RTL8192EUS，实测下来受到 USB 3.0 的干扰最小，基本不影响正常使用，于是固定到了盘架左侧的空间里面，当然现在用六类线直接插到入户设备上，也就不再用 2.4GHz 无线网卡了。
+* 2TB 的硬盘不够用了，于是 2018 年双十一买了西部数据的 10TB 5400RPM 监控盘，应该是能买到的这个转速下容量最大的盘了
 
-* 需要解决的问题
-    * 集成显卡
-    * 11ac 无线网卡
-    * 存储部分
-    * 直通对于这些设备的意义
-* 虚拟化相关技术简介
-    * 常见的几种 Hypervisor
-        * Vmware ESXi
-        * Hyper-V
-        * KVM
-    * 虚拟化的分类
-        * Type I 与 Type II
-        * Full Virtualization 与 Paravirtualization
-        * MMIO 与 IOMMU
-        * VT-d，VT-x
-        * SR-IOV
-            * Hyper-V 中 SR-IOV 发挥的作用
-* 针对上述三种 Hypervisor 的实践
-    * OpenWRT 的定制
-        * Hyper-V 驱动的迷之 Bug？
-    * PCI 直通如何实现？
-    * 主机与虚拟机的网络配置
-    * 存储部分的设计
+另外 Host OS 从 Deepin 换到 Linux Mint，重新划分空间并且配置了到 OneDrive 的自动同步，还搞了 IPv6 代理用来下北邮人，这些后面会详细谈。
+
+至于最近为什么突然想起来重新填这个坑？上个月同事发现手机没空间了，因此也打算搞一个类似草民这种方案的 NAS。不过他的方案搭建起来明显没有草民这么顺利，中间多踩了很多坑，比如 IOMMU Group 不好拆分之类的问题。一起搞下来发现也算是比较常见的问题，因此一同总结进来，顺便把之前留的坑都认真填上。
+
+这里前面部分还是主要谈虚拟化的一些东西，后面再额外介绍一些网盘同步、IPv6 代理下载 PT 之类的内容。
 
 # 需要解决的问题
+
+上次换主板，除了考虑到原来的那块主板的 CPU 性能和网卡的数量之外，更多的还是包括想让这台设备拥有更加丰富的功能，尤其是狗东 618 买了投影之后，更主要的目的也包括让这台设备能够承担一些 HTPC 相关的工作。
 
 考虑上面提到的需求，这台设备具备的功能基本上不可能用单独的一个操作系统来完成了：
 
@@ -88,11 +73,7 @@ tags:
 * 直通单个 ATA 设备，对于我们的平台来说是最好的选择。
 * 直通块设备及其以上的层次的话，通过 ATA 命令管理硬盘的需求肯定就不能实现了
 
-草民的实践中尝试了在 KVM 内直通 ATA 设备和直通块设备，但是发现两种方式似乎都是 QEMU 模拟了一个 ATA 设备，并没能达到我的预期效果。
-
-【图】
-
-因此最终选择的方式还是由 Host OS 负责存储管理。
+草民的实践中尝试了在 KVM 内直通 ATA 设备和直通块设备，但是发现两种方式似乎都是 QEMU 模拟了一个 ATA 设备，并没能达到我的预期效果。因此最终选择的方式还是由 Host OS 负责存储管理。
 
 ## 直通在这些设备上的意义
 
@@ -119,14 +100,6 @@ Type-I 的 Hypervisor 本身就是运行在硬件上的 Host OS；Type-II 的 Hy
 Full Virtualization 模拟真实的硬件环境，使得 Guest OS 可以不做修改就运行在 VM 中；Paravirtualization 则并不模拟完整的硬件环境，只是提供一些 API 供 Guest OS 实现虚拟化功能，也就是说 Guest OS 需要针对 Hypervisor 进行修改才能运行在 VM 中。
 
 Linux 内核提供了针对 Xen 和 KVM 等 Hypervisor 的 Paravirtualization 支持，内核启动时可以自动识别自己运行的环境，以适应对应的虚拟化 API。对于 Hyper-V 等 Linux 没有直接支持 Paravirtualization 的 Hypervisor，内核会以在普通硬件上工作的方式在 VM 中运行（但是这种情况下内核能够识别出 Hyper-V Hypervisor）。
-
-## Memory-Mapped IO
-
-这个还是需要补充下的。
-
-## MSI
-
-同样需要补充。
 
 # 草民的虚拟化实践
 
@@ -193,7 +166,7 @@ Hyper-V 的情况要复杂一些。
 
 ![](../assets/images/diy-nas-project-4/kernel_menuconfig_hyperv.png)
 
-但是全选并不意味着能全都正常工作……草民的尝试中就发现 LEDE 默认会忽略 Hyper-V 的 PCI Bus。通过以下方法可以绕过这个问题，但是实际使用的时候会立即 Oops 崩溃，原因不明：
+但是全选并不意味着能全都正常工作……草民的尝试中就发现 LEDE 默认会忽略 Hyper-V 的 PCI Bus，当然可以通过以下方法可以绕过这个问题。
 
 ```patch
 diff --git a/config/Config-kernel.in b/config/Config-kernel.in
@@ -211,9 +184,7 @@ index 3468899..8a55b1e 100644
 +               just test.
 ```
 
-然后在 Kernel build settings 中选中 Hyper-V PCI Frontend 即可。
-
-当然，这里的 Crash 确实在我能力之外，无力解决……
+然后在 Kernel build settings 中选中 Hyper-V PCI Frontend 即可。然而非常奇怪的是，实际使用的时候会立即 Oops 崩溃，原因不明，后来（隔了好几个月之后），x86 target 更新到 4.14 内核了，解决了这一问题，不过由于直通只能在 Windows Server 下运行，因此我也没再进行验证。
 
 ### UEFI Support
 
@@ -221,11 +192,17 @@ index 3468899..8a55b1e 100644
 
 在本地 merge 这个 branch：[sduponch:x86_uefi](https://github.com/sduponch/source/tree/x86_uefi)，然后即可在 Target Images 中发现 UEFI 相关选项。
 
-不知道为什么这个还没有 merge 进 trunk master……
+不知道为什么这个，似乎到现在（2019 年清明），还没有 merge 进 master……
 
-## PCI 直通如何实现？
+## PCI Passthrough 超级大坑
 
-回去补一下相关说明吧……
+### Hyper-V PCI Passthrough
+
+关于 Hyper-V 的直通，草民不再重新搭环境搞了，成本太高。直接参考 [https://lenovopress.com/lp0088.pdf](https://lenovopress.com/lp0088.pdf) 。
+
+### KVM 
+
+KVM 搞这个，其实可以说相当简单。
 
 ## 主机与虚拟机的网络配置
 
