@@ -198,18 +198,58 @@ index 3468899..8a55b1e 100644
 
 ### Hyper-V PCI Passthrough
 
-关于 Hyper-V 的直通，草民不再重新搭环境搞了，成本太高。直接参考 [https://lenovopress.com/lp0088.pdf](https://lenovopress.com/lp0088.pdf) 。
+关于 Hyper-V 的直通，草民不再重新搭环境搞了，成本太高。直接参考 [https://lenovopress.com/lp0088.pdf](https://lenovopress.com/lp0088.pdf) 里面的说明即可。
 
 ### KVM
 
-KVM 搞这个，其实可以说相当简单。
+正常情况下来说，KVM 搞这个，其实可以说相当简单。
+
+首先确定 UEFI 里面打开了 VT-d。修改 `/etc/default/grub` 里面的默认内核参数，加上 `intel_iommu=on,igfx_off` 即可。
+
+重启，在关闭虚拟机的情况下，打开虚拟机详情，添加硬件，如图选择 PCI Host Device 再选择需要穿进来的设备即可。
 
 ![](../assets/images/diy-nas-project-4/kvm-pci-passthrough.png)
 
+在草民这块儿主板上，直通 PCIE 设备没有遇到任何问题，非常顺利。通进去之后 OpenWrt 很快自动识别到了无线网卡，按常规方法配置好 SSID 密码之类即可正常使用。
+
+### IOMMU Group Breaking Up
+
+草民自己的是非常顺利，但是同事的方案就遇到了比较大的麻烦。
+
+同事选择的是 ASRock 的一块儿 J3455 的主板，主要的问题是，绝大多数设备都被分到了一个 IOMMU Group 里面，比如 [Any ideas why all PCIe ports are assigned to the same iommu group?](https://www.reddit.com/r/VFIO/comments/63j1p7/any_ideas_why_all_pcie_ports_are_assigned_to_the/) 里面说的这样，主板上的 M2 插槽，PCIE 插槽还有 SATA 控制器以及有线网卡都被分在了同一个 IOMMU 组里面，那就需要把这些设备一股脑通进同一台虚拟机中，而这样操作很明显是不可接受的。
+
+帖子里面提到的解决方法是安装打了 ACS Override 补丁的内核。于是找到了一个地址 [https://queuecumber.gitlab.io/linux-acs-override/](https://queuecumber.gitlab.io/linux-acs-override/) 提供预先编译好的带 ACS Override 补丁的内核，选一个版本安装，然后在内核命令行里面添加对应的参数 `pcie_acs_override=downstream` 即可。
+
+但是就这一块儿主板来说，这一个补丁似乎并没有效果。仔细看了看上面的那个帖子，里面提到要对 ACS Override 补丁再做一些调整，具体是删掉其中一行 if 里面的一个条件。
+
+```c
+/* Never override ACS for legacy devices or devices with ACS caps */
+if (!pci_is_pcie(dev) ||
+    pci_find_ext_capability(dev, PCI_EXT_CAP_ID_ACS))
+        return -ENOTTY;
+```
+
+需要把这个 patch 中 `pci_find_ext_capability(dev, PCI_EXT_CAP_ID_ACS)` 这一个条件去掉。修改这个 patch，删掉这一行和上面的 or 运算符，补一个小括号，然后把上面行号也减掉 1（为什么这么改，可以了解一下 patch 文件的格式）。之后的事情就是 Clone 下来 Linux 内核源代码，`git apply` 这个 patch，然后花一个多小时重新编译内核。
+
+从重新编译好的内核启动之后 IOMMU Group 顺利拆分，虚拟机也可以正常启动，无线网卡可正常识别正常使用。除去之后内核即使是小版本的升级也会比较麻烦之外，问题基本解决。
+
+### DKMS
+
+同事的存储在我之前的建议下使用了 ZFS。不像 ext4 btrfs 这样的文件系统，ZFS 没有原生 Linux 支持，需要编译成内核模块 insmod 进内核才能正常使用。为方便起见 ZFS 支持 DKMS，也就是说更新内核的时候可以自动重新编译出新的内核模块。而由于我们上面重新编译了自己的内核，DKMS 可以说很不意外的炸了，具体怎么炸的我目前也不是特别了解。
+
+同事目前自己拖了 zfs on linux 的源代码下来，使用非 DKMS 的方式进行编译，目前可以正常使用。DKMS 的问题之后有空再尝试修复吧。
+
 ## 主机与虚拟机的网络配置
 
-不同的 Host OS 下选择了不同的网络配置，后面谈……
+### Hyper-V
 
-## 存储部分的设计
+Hint：NUC 上有现成的 VM 可以用，这个没什么好说的，明天上去截图。
 
-对于最终决定的方案 KVM 来说，这个应该算得上是大坑了……后面再谈……
+### KVM
+
+Hint：Passthrough 的一个网卡，以及 Host - Guest 的通信（包括 NAT 方式和桥接方式，以及如何避免跟 Docker 冲突等）。明天上 NAS 截图。
+
+## 存储部分
+
+Hint：这里包括组织文件的方式（btrfs subvolume）、共享文件系统（samba，9p），网盘同步（onedrive），pt 下载（ipv6 隧道，包括之前 6plat 和现在自己搞的方式并且 kvm openvz windows 怎么搭隧道都介绍下，还有 deluge）。量估计不小，可能要后天补充完。
+
