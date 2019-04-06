@@ -50,7 +50,8 @@ tags:
 
 草民的这块主板并没有可以用来插独立显卡的地方，在这种情况下直接配置集成显卡的直通属于非常典型的作死行为，毕竟一旦翻车除了重装 Host OS 之外几乎没有解决方法。
 
-搜索资料得知，Intel 的集成显卡支持一种特性，可以实现在不同的 VM 之间共享集成显卡，提供包括 3D 加速和视频输出等服务。不过目前并不知道有什么 Hypervisor 支持这一特性，所以目前比较稳妥的方式还是由 Host OS 来负责控制集成显卡，也就是说最好选择带图形界面的 Linux 搭配 KVM / Xen，或者使用 Windows 搭配 Hyper-V 来实现需求。ESXi 肯定是不支持了，ESX 也许还可以考虑一下，毕竟 ESX 本质上也就是一个带 X 的 Linux。
+搜索资料得知，Intel 的集成显卡支持一种名为 GVT-g 的特性，可以实现在不同的 VM 之间共享集成显卡，提供包括 3D 加速和视频输出等服务。看教程 [[GUIDE] Running Windows via QEMU/KVM and Intel GVT-g on Arch Linux
+](https://www.reddit.com/r/VFIO/comments/8h352p/guide_running_windows_via_qemukvm_and_intel_gvtg/) 尝试了一下，步骤倒并不困难，不过方案还并不成熟，virt-manager 和 qemu 的版本都有要求，配置起来坑也蛮多，感觉意义也不是很大。因此目前比较稳妥的方式还是由 Host OS 来负责控制集成显卡，也就是说最好选择带图形界面的 Linux 搭配 KVM / Xen，或者使用 Windows 搭配 Hyper-V 来实现需求。ESXi 肯定是不支持了，ESX 也许还可以考虑一下，毕竟 ESX 本质上也就是一个带 X 的 Linux。
 
 ## 关于存储
 
@@ -241,17 +242,130 @@ if (!pci_is_pcie(dev) ||
 
 ## 主机与虚拟机的网络配置
 
+一般来说给虚拟机连接网络，方式不外乎三种：三层上做 NAT，二层上做桥接，一层上直接把网卡直通进虚拟机。Hyper-V 和 KVM 对这三种方法都能很好支持，当然会有一些细节在里面。
+
 ### Hyper-V
 
-Hint：NUC 上有现成的 VM 可以用，这个没什么好说的，明天上去截图。
+Hyper-V 会自动创建一个 NAT 方式的适配器，一般新建虚拟机的时候直接选择这个，虚拟机就可以连接网络了。
+
+![](../assets/images/diy-nas-project-4/hyperv-nat.png)
+
+Hyper-V 也可以很容易的实现桥接方式，新建一个外部交换机，然后选择需要桥接的设备即可。
+
+![](../assets/images/diy-nas-project-4/hyperv-bridge.png)
+
+另外，也可以像上面说的那样直接把物理设备直通进虚拟机，步骤就不再赘述。服务器版 Windows 的 Hyper-V 在使用桥接模式的情况下，可以选择启用 SR-IOV 进行网络设备虚拟化，原理与直通很相似，性能水平也基本接近。
 
 ### KVM
 
-Hint：Passthrough 的一个网卡，以及 Host - Guest 的通信（包括 NAT 方式和桥接方式，以及如何避免跟 Docker 冲突等）。明天上 NAS 截图。
-
 KVM 配置网络的方法很多，不过大体上跟 Hyper-V 也基本上一样，同时支持包括直通网络设备、桥接、NAT 三种方式。当然实际做起来比 Hyper-V 稍微复杂一些。
+
+默认情况下 virt-manager 也同样会创建一个 NAT 方式的网络，新建虚拟机的时候直接选定即可。
+
+![](../assets/images/diy-nas-project-4/kvm-nat.png)
+
+KVM 也可以使用桥接的方式。创建一个桥，然后选定要桥接的设备即可。
+
+![](../assets/images/diy-nas-project-4/kvm-bridge.png)
+
+一般来说桥接是比较好的做法，性能比较好的同时也方便从入户的 NAT 网关配置端口转发。比如我的 OpenWrt 上就配置了 ssh 和 OpenVPN 的端口转发，因为帝都联通有公网 IP，直接从公司连回来延迟很低（平均不到 10ms），带宽也不错，甚至可以尝试进行 Steam 串流。
+
+不过桥接也有两个问题：
+
+* Host 开机会慢一些，主要是需要等到虚拟机启动建好这个桥才行
+* 跟 Docker 会有一些冲突，具体原因不是特别清楚，可以通过添加下面这些 sysctl 参数解决：
+
+    ```
+    net.bridge.bridge-nf-call-ip6tables = 0
+    net.bridge.bridge-nf-call-iptables = 0
+    net.bridge.bridge-nf-call-arptables = 0
+    ```
+
+    然而还是有问题：一般来说设置这些参数的 systemd target 在 Docker 前启动，Docker 一启动就会把这些参数又覆盖掉，所以每次开机还需要手动 `sysctl -p` 一下。当然我使用的时候就比较省事，因为也不怎么用 Docker 就直接卸了。
+
+除了直接这样创建 Bridge，还可以通过 macvtap 的方式，效果与 Bridge 类似。
+
+![](../assets/images/diy-nas-project-4/kvm-macvtap.png)
+
+不过 macvtap 有比较大的局限性，主要是不能实现 Host 和 Guest 互相访问，因此一般情况下很少使用。
+
+另外，若想在虚拟网络设备上达到比较好的性能，需要选定 virtio 网络设备，同时 OpenWrt 也需要正确添加 virtio 网络设备的支持。
+
+![](../assets/images/diy-nas-project-4/kvm-net-virtio.png)
+
+除此之外 KVM 也可以直通网络设备，步骤跟直通无线网卡是一样的，就不再赘述了。
 
 ## 存储部分
 
-Hint：这里包括组织文件的方式（btrfs subvolume）、共享文件系统（samba，9p），网盘同步（onedrive），pt 下载（ipv6 隧道，包括之前 6plat 和现在自己搞的方式并且 kvm openvz windows 怎么搭隧道都介绍下，还有 deluge）。量估计不小，可能要后天补充完。
+NAS 毕竟 Storage 才是大头。本来是希望使用黑群晖之类比较靠谱的 NAS 操作系统，但是仔细考虑之后觉得好像也没有很大意义，所以还是直接由 Host OS 来做管理，包括 Samba、PT 下载之类的这样配置起来也容易些。
+
+目前选定的文件系统是 btrfs，原因主要是觉得高级特性比较多，Docker 可以直接做 graph driver，支持快照方便备份数据、子卷方便空间共享，而且实际性能也没有比 ext4 差很多（当然主要是我对性能要求也没有特别高）。当然实际用下来发现有个比较烦的问题是 btrfs 每半分钟要 sync 一次，这样我的硬盘始终没有机会停转，不节能，而且噪音也略大。当然目前 5400rpm 的硬盘本身噪音也并不是很大，所以这个还是忍了。
+
+### 空间划分
+
+由于之前硬盘挂过一次，现在对数据不可能再随心所欲。仔细思考了一段时间，应该如何对待我的数据。
+
+目前想的方案是这样：硬盘格式化容量大约是 9.09TB，90GB 拿去给 Host OS 当 /home，剩下 9TB 凑个整，直接划成一个大 btrfs 分区，然后在里面建立三个子卷：
+
+* Public：可以和室友共享的数据，包括一些电影、镜像之类资源，并且丢了也不会觉得心疼。室友可以直接连接 NAS 的 IP，就可以看到共享分区，并且随意读取其中的资源，不过修改是不被允许的。
+* Private：不能随意共享的数据，包括一些照片、文档等。不过由于不是很重要，丢了也不会觉得可惜。
+* Critical：很重要的数据，不能共享，不能丢失，量一般来说不大。这些数据采取自动同步到网盘的方式来保证数据安全（OneDrive 出问题的可能性还是很低的）。只要 OneDrive 和草民的 NAS 不同时出问题，数据就不会丢掉。
+
+因为使用了 btrfs，这三个子卷共享总共 9TB 的空间。不用费心思考虑哪个分区有多大，使用起来十分方便。
+
+![](../assets/images/diy-nas-project-4/parts.png)
+
+个人觉得这样的方式应该可以满足草民绝大多数情况下的需求，因此方案共享出来给大家参考。
+
+### 共享文件系统
+
+共享文件的方式，简单起见使用了兼容性、性能就比较好的 Samba。与虚拟机互通数据的需求则使用 Plan 9，Plan 9 使用非常方便，不过性能比较差，目前我基本上只用于比较方便的更新虚拟机中的 OpenWrt。
+
+#### Samba
+
+Samba 的配置教程到处都是，无非是 apt 安装，修改配置文件添加共享，做好权限控制（包括可见性），配置好 smbpasswd 之类。具体步骤就不再赘述了。
+
+#### Plan 9
+
+Plan 9 使用十分简单，不过需要对 OpenWrt 内核添加 kmod-9p 这个模块才能使用，这个无论是自己编译进内核还是 opkg 安装都可以。
+
+在 virt-manager 里面添加一个共享，像下图这样配置。
+
+![](../assets/images/diy-nas-project-4/kvm-p9.png)
+
+OpenWrt 的挂载点还不能自动识别 9P 文件系统，因此需要写到 Startup 里面：
+
+```
+mount -t 9p host_hdd /root
+```
+
+重启就可以在挂载点里面看到了。
+
+```
+root@LEDE:~# mount
+/dev/root on /rom type squashfs (ro,relatime)
+proc on /proc type proc (rw,nosuid,nodev,noexec,noatime)
+sysfs on /sys type sysfs (rw,nosuid,nodev,noexec,noatime)
+tmpfs on /tmp type tmpfs (rw,nosuid,nodev,noatime)
+/dev/loop0 on /overlay type f2fs (rw,lazytime,noatime,background_gc=on,discard,no_heap,user_xattr,inline_xattr,inline_data,inline_dentry,flush_merge,extent_cache,mode=adaptive,active_logs=6,alloc_mode=reuse,fsync_mode=posix)
+overlayfs:/overlay on / type overlay (rw,noatime,lowerdir=/,upperdir=/overlay/upper,workdir=/overlay/work)
+/dev/vda1 on /boot type ext4 (rw,noatime,block_validity,delalloc,barrier,user_xattr)
+/dev/vda1 on /boot type ext4 (rw,noatime,block_validity,delalloc,barrier,user_xattr)
+tmpfs on /dev type tmpfs (rw,nosuid,relatime,size=512k,mode=755)
+devpts on /dev/pts type devpts (rw,nosuid,noexec,relatime,mode=600,ptmxmode=000)
+/dev/vda1 on /mnt/vda1 type ext4 (rw,relatime,block_validity,delalloc,barrier,user_xattr)
+host_hdd on /root type 9p (rw,sync,dirsync,relatime,access=client,trans=virtio)
+```
+
+### OneDrive 同步
+
+我使用的是这个 [https://github.com/abraunegg/onedrive](https://github.com/abraunegg/onedrive)。
+
+按说明编译，安装 systemd service 并配置好自动启动即可。教程还是很详细的。实际使用，写进 Critical 分区的数据每 45 秒会同步到 OneDrive 一次，每五分钟会从 OneDrive 拉取变更，基本可以满足我的需求。
+
+### IPv6 + PT 下载
+
+pt 下载（ipv6 隧道，包括之前 6plat 和现在自己搞的方式并且 kvm openvz windows 怎么搭隧道都介绍下，还有 deluge）
+
+
 
