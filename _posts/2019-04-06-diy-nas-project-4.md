@@ -295,13 +295,13 @@ KVM 也可以使用桥接的方式。创建一个桥，然后选定要桥接的�
 
 除此之外 KVM 也可以直通网络设备，步骤跟直通无线网卡是一样的，就不再赘述了。
 
-## 存储部分
+# 存储部分
 
 NAS 毕竟 Storage 才是大头。本来是希望使用黑群晖之类比较靠谱的 NAS 操作系统，但是仔细考虑之后觉得好像也没有很大意义，所以还是直接由 Host OS 来做管理，包括 Samba、PT 下载之类的这样配置起来也容易些。
 
 目前选定的文件系统是 btrfs，原因主要是觉得高级特性比较多，Docker 可以直接做 graph driver，支持快照方便备份数据、子卷方便空间共享，而且实际性能也没有比 ext4 差很多（当然主要是我对性能要求也没有特别高）。当然实际用下来发现有个比较烦的问题是 btrfs 每半分钟要 sync 一次，这样我的硬盘始终没有机会停转，不节能，而且噪音也略大。当然目前 5400rpm 的硬盘本身噪音也并不是很大，所以这个还是忍了。
 
-### 空间划分
+## 空间划分
 
 由于之前硬盘挂过一次，现在对数据不可能再随心所欲。仔细思考了一段时间，应该如何对待我的数据。
 
@@ -317,15 +317,15 @@ NAS 毕竟 Storage 才是大头。本来是希望使用黑群晖之类比较靠�
 
 个人觉得这样的方式应该可以满足草民绝大多数情况下的需求，因此方案共享出来给大家参考。
 
-### 共享文件系统
+## 共享文件系统
 
-共享文件的方式，简单起见使用了兼容性、性能就比较好的 Samba。与虚拟机互通数据的需求则使用 Plan 9，Plan 9 使用非常方便，不过性能比较差，目前我基本上只用于比较方便的更新虚拟机中的 OpenWrt。
+共享文件的方式，简单起见使用了兼容性、性能都比较好的 Samba。与虚拟机互通数据的需求则使用 Plan 9，Plan 9 使用非常方便，不过性能比较差，目前我基本上只用于比较方便的更新虚拟机中的 OpenWrt。
 
-#### Samba
+### Samba
 
 Samba 的配置教程到处都是，无非是 apt 安装，修改配置文件添加共享，做好权限控制（包括可见性），配置好 smbpasswd 之类。具体步骤就不再赘述了。
 
-#### Plan 9
+### Plan 9
 
 Plan 9 使用十分简单，不过需要对 OpenWrt 内核添加 kmod-9p 这个模块才能使用，这个无论是自己编译进内核还是 opkg 安装都可以。
 
@@ -357,15 +357,78 @@ devpts on /dev/pts type devpts (rw,nosuid,noexec,relatime,mode=600,ptmxmode=000)
 host_hdd on /root type 9p (rw,sync,dirsync,relatime,access=client,trans=virtio)
 ```
 
-### OneDrive 同步
+## OneDrive 同步
 
 我使用的是这个 [https://github.com/abraunegg/onedrive](https://github.com/abraunegg/onedrive)。
 
 按说明编译，安装 systemd service 并配置好自动启动即可。教程还是很详细的。实际使用，写进 Critical 分区的数据每 45 秒会同步到 OneDrive 一次，每五分钟会从 OneDrive 拉取变更，基本可以满足我的需求。
 
-### IPv6 + PT 下载
+## IPv6 + PT 下载
 
-pt 下载（ipv6 隧道，包括之前 6plat 和现在自己搞的方式并且 kvm openvz windows 怎么搭隧道都介绍下，还有 deluge）
+搞 NAS 最主要的用途还是存放电影、镜像之类资源，毕竟说真的，不能丢的资源还是少数，多数情况下还是娱乐为主。之前在学校的时候有睿思，下东西那叫一个爽，现在睿思没得用了，不过还可以尝试一下北邮人 PT。折腾了一段时间，目前还算稳定，下载速度尚可。
 
+帝都联通从去年下半年就开始嚷嚷着有 IPv6 支持了，然而反正是我到现在都没有见过 IPv6 地址。所以还是得想法子自己搞一个。因为入户设备本身是个 NAT 网关，虽然有公网 IP，但是经常改变，而且也不一定能在上面跑 6in4 这样的协议，所以还是只能考虑用隧道方案。常用的方案有 6plat 和自己架代理两种。
 
+### 6plat
+
+6plat 比较简单，成本也很低。随便申请一个 6plat 的账号，然后会得到一个 OpenVPN 配置文件，用它连接就可以得到一个 IPv6 地址了。当然如果想在内网使用，除了在 OpenWrt 里面连 OpenVPN 之外，还需要再配置一下 IPv6 NAT。把下面这行写在 Firewall 的 Custom Rules 里面即可。
+
+```bash
+ip6tables -t nat -A POSTROUTING -j MASQUERADE
+```
+
+### Proxy
+
+之前 6plat 还可以正常上北邮人，但是后来因为某些原因 6plat 的地址段被全都屏蔽了，所以只能换用自己架的方式。
+
+自己架的方式需要有一台 VPS，最好本身就有 IPv6 地址（比如 vultr 的很多都有）。没有 IPv6 地址的话则稍微复杂一点。
+
+首先到 [https://tunnelbroker.net/](https://tunnelbroker.net/) 申请一个免费的隧道。
+
+![](../assets/images/diy-nas-project-4/he.png)
+
+如果是 KVM Linux / Windows 的话，基本上照着 Example Configurations 里面的配置抄一下就可以使用了。对于 Windows 来说，可能还需要关掉 Routing and Remote Access 服务，否则这个隧道可能不定时抽风，而且这个命令每次开机都要重新打一遍，挺费事儿的，建议还是用 Linux。
+
+如果是 OpenVZ 方案的话，则需要首先联系客服打开 TUN / TAP 支持，然后使用这个 [https://github.com/Blaok/tb-userspace](https://github.com/Blaok/tb-userspace)。虽然这个代码看起来也确实是比较可怕，不过好在运行起来十分稳定。修改配置文件把隧道的配置写进去：
+
+```
+INT=tb
+SERVER=<Server IPv4 Address>
+LOCAL=<Client IPv4 Address>
+ADDR64=<Routed /64>
+ADDR48=<Routed /48>
+MTU=1480
+```
+
+再按照说明安装好 systemd service，配置服务开机启动就行了。
+
+```
+# ifconfig tb
+tb        Link encap:UNSPEC  HWaddr 00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00
+          inet6 addr: <Routed /48> Scope:Global
+          inet6 addr: <Routed /64> Scope:Global
+          UP POINTOPOINT RUNNING NOARP MULTICAST  MTU:1480  Metric:1
+          RX packets:54201409 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:71461688 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:500
+          RX bytes:56603544261 (56.6 GB)  TX bytes:25960610719 (25.9 GB)
+
+# systemctl status tb@he
+● tb@he.service - User Space Tunnel Broker
+   Loaded: loaded (/etc/systemd/system/tb@.service; enabled; vendor preset: enabled)
+   Active: active (running) since Sun 2019-03-24 08:22:10 EDT; 1 weeks 6 days ago
+ Main PID: 19093 (tb-userspace)
+   CGroup: /system.slice/system-tb.slice/tb@he.service
+           └─19093 /usr/local/bin/tb-userspace tb <Server IPv4 Address> <Client IPv4 Address> sit
+
+Warning: Journal has been rotated since unit was started. Log output is incomplete or unavailable.
+```
+
+VPS 有 IPv6 地址了，然后就需要一个 SOCKS5 代理到本地。其实就是一个梯子，这个随便用什么方案都行，可以参考之前的 Broken Ladders 选择最好的方案。目前我使用的是 V2Ray ws + tls + cdn，速度很快。
+
+### Downloader
+
+最后需要一个能够通过 SOCKS5 代理连接 Peer 的 BT 下载软件。Windows 的话直接用常见的 uTorrent 就可以，Linux 的话 Transmission 是不支持的，建议使用 Deluge。安装方式就不赘述了，apt 即可，然后配一下 web 管理界面的开机自启动。最后在 Web 界面里面配一下 Deluge 的代理即可。
+
+![](../assets/images/diy-nas-project-4/deluge.png)
 
