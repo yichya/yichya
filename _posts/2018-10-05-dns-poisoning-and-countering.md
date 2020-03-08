@@ -5,6 +5,8 @@ categories:
   - Small Things
 tags:
   - openwrt
+  - lede
+  - router
 ---
 
 DNS 污染极为简单易行且效果极佳，一直都是各种牛鬼蛇神搞事的极佳手段。这篇东西介绍一下常见的 DNS 投毒现象，以及草民尝试过的几种避免被投毒的方案。

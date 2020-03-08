@@ -16,11 +16,9 @@ sidebar_link: true
 
 ## Primary Skills
 
-目前主修 Web 后端方向技能。主要使用 Python，偶尔需要写一点 Node.js 和 Go。公司主要用 Django，但是 ORM 用的是 SQLAlchemy 而不是 Django 自带的。
+目前主修 Web 后端方向技能。主要使用 Python 和 Go。Python 的话，Web 方面公司主要用 Django，但是 ORM 用的是 SQLAlchemy 而不是 Django 自带的，自己也用过 Tornado、Flask 还有 Node 世界里面的 Express 这些常见 Web 框架。RPC 的话主要是魔改 Thrift，基于一个旧版本加一点限流监控，Service Mesh 代理之类。Go 目前用的偏多一点，但是只用魔改 Thrift 写 RPC，其他的做的不多。
 
-自己也用过 Tornado、Flask 还有 Node 世界里面的 Express 这些常见 Web 框架。至于 Go 目前没有大规模用过，基本上只用来写 RPC 服务。
-
-数据库方面，MySQL 日常打交道比较多吧，用的大概也是比较熟悉的，常见的一些问题基本上都知道怎么解决。ElasticSearch 也是日常经常打交道不过还不是很熟悉，Redis 同理。MongoDB 以前耍的比较多，最近马上要出 4.0 要支持事务了，感觉又得重新学一遍。
+数据库方面，MySQL 日常打交道比较多吧，用的大概也是比较熟悉的，常见的一些问题基本上都知道怎么解决。Redis 偶尔用，用的少。公司也用 ElasticSearch，但是跟我的业务关系不大。MongoDB 自己玩过，但是是很老的版本了。
 
 ## Secondary Skills
 
@@ -28,11 +26,11 @@ sidebar_link: true
 
 对于 Windows 操作系统有丰富的维护经验，熟悉 BIOS 和 UEFI 平台下的启动配置、常见故障排除等。熟练掌握 Windows 系统的定制、高级部署。熟练掌握适合各种情况的 Windows PE 定制与部署。说人话就是修电脑经验丰富，估计以后老了楼下开个铺子，起码养活自己我还是有信心的。
 
-花式路由器玩家。喜欢折腾 OpenWrt 路由器，魔改过几台路由。天天折腾 OpenWrt BuildRoot。在这个过程对 Linux 内核还有 Lua 有了一定的了解。目前正在尝试做一款图形化的 OpenWrt BuildRoot 辅助工具，名字暂定为 LedeForge。
+花式路由器玩家。喜欢折腾 OpenWrt 路由器，魔改过几台路由。天天折腾 OpenWrt BuildRoot。在这个过程对 Linux 内核还有 Lua 有了一定的了解。~~目前正在尝试做一款图形化的 OpenWrt BuildRoot 辅助工具，名字暂定为 LedeForge。~~ 坑了。
 
 焊接技能，DIY 过 U 盘。为路由器更换过 Ram 芯片。希望有机会玩一玩热风枪。
 
-树莓派 2B、3B 用户。对嵌入式开发一直很感兴趣。
+树莓派 2B、3B、3B+、4B、Zero W 用户，额外搞过一点点 ATTiny85 ESP8266 之类。对嵌入式开发一直很感兴趣。
 
 ## Trying to learn
 
@@ -48,3 +46,10 @@ sidebar_link: true
 * 偶尔玩 FPS，最喜欢 Crysis。吃鸡不太感兴趣。
 * Steam 上还有 Just Cause 3 等一些游戏，求一波好友。
 
+# 近期准备填的坑
+
+1. [x] 一些个人隐私防护、数据安全之类的碎碎念
+2. [ ] Devices 系列（EC20，Odroid Go，Anker 的充电器，小米的新电源，树莓派 4B），另外 Devices 系列建设起来，最好手里有三四样东西的时候就水一篇
+3. [x] NAS 迁移到 Manjaro 的记录，加上网络、docker、准入相关等一些东西的进展
+4. [ ] 工作上的日常吐槽，大概四月中旬之后拿了年终奖会写
+5. [ ] Hydeout 主题升级
