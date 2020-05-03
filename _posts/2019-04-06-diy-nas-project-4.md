@@ -273,7 +273,7 @@ KVM 也可以使用桥接的方式。创建一个桥，然后选定要桥接的�
 不过桥接也有两个问题：
 
 * Host 开机会慢一些，主要是需要等到虚拟机启动建好这个桥才行
-* 跟 Docker 会有一些冲突，具体原因不是特别清楚，可以通过添加下面这些 sysctl 参数解决：
+* 跟 Docker 会有一些冲突，具体原因可以看 [Docker breaks libvirt bridge network](https://serverfault.com/questions/963759/docker-breaks-libvirt-bridge-network)，简单做法，可以通过添加下面这些 sysctl 参数解决：
 
     ```
     net.bridge.bridge-nf-call-ip6tables = 0
