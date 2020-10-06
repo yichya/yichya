@@ -1,144 +1,55 @@
-# Hydeout
-
-Hydeout updates the original [Hyde](https://github.com/poole/hyde)
-theme for [Jekyll](http://jekyllrb.com) 3.x and adds new functionality.
-
-![Desktop](/_screenshots/1.png?raw=true)
-<img alt="Mobile home page" src="/_screenshots/2.png?raw=true" width="300px" />
-<img alt="Mobile post page" src="/_screenshots/3.png?raw=true" width="300px" />
-
-### Usage
-
-Hydeout is available as the `jekyll-theme-hydeout` Ruby Gem.
-Add `gem "jekyll-theme-hydeout", "~> 3.4"` to your Gemfile and run
-`bundle install`.
-
-Hydeout uses pagination, so if you have an `index.md`, you'll need to swap
-it with an `index.html` that uses the `index` layout:
-
-```
 ---
-layout: index
-title: Home
----
-```
-
-### Keep It Simple
-
-In keeping with the original Hyde theme, Hydeout aims to keep the overall
-design lightweight and plugin-free. JavaScript is currently limited only
-to Disqus and Google Analytics (and is only loaded if you provide configuration
-variables).
-
-Hydeout makes heavy use of Flexbox in its CSS. If Flexbox is not available,
-the CSS degrades into a single column layout.
-
-### Customization
-
-Hydeout replaces Hyde's class-based theming with the use
-of the following SASS variables:
-
-```scss
-$sidebar-bg-color: #202020 !default;
-$sidebar-sticky: true !default;
-$layout-reverse: false !default;
-$link-color: #268bd2 !default;
-```
-
-To override these variables, create your own `assets/css/main.scss` file.
-Define your own variables, then import in Hydeout's SCSS, like so:
-
-```scss
----
-# Jekyll needs front matter for SCSS files
+layout: page
+title: About
+sidebar_link: true
 ---
 
-$sidebar-bg-color: #ac4142;
-$link-color: #ac4142;
-$sidebar-sticky: false;
-@import "hydeout";
-```
+> A good soldier knows there's only one thing he can rely on when the chips are down: Not his cutting-edge intel, not his state of the art equipment, and not his top of the line weapon. Just himself: It took me a long time to remember that. 
+>
+> --- Laurence "Prophet" Barnes
 
-See the [_variables](_sass/hydeout/_variables.scss) file for other variables
-you can override.
+大概是一个无聊的人（QC）。常以草民自称。
 
-You can see the full set of partials you can replace in the
-[`_includes`](_includes) folder, but there are a few worth noting:
+重度社交恐惧症患者，努力尝试自救中。
 
-* `_includes/copyright.html` - Insert your own copyright here.
+喜欢 DIY，羡慕动手能力强的技术宅。
 
-* `_includes/custom-head.html` - Insert custom head tags (e.g. to load your
-  own stylesheets)
+## Primary Skills
 
-* `_includes/custom-foot.html` - Insert custom elements at the end of the
-  body (e.g. for custom JS)
+目前主修 Web 后端方向技能。主要使用 Python 和 Go。Python 的话，Web 方面公司主要用 Django，但是 ORM 用的是 SQLAlchemy 而不是 Django 自带的，自己也用过 Tornado、Flask 还有 Node 世界里面的 Express 这些常见 Web 框架。RPC 的话主要是魔改 Thrift，基于一个旧版本加一点限流监控，Service Mesh 代理之类。Go 目前用的偏多一点，但是只用魔改 Thrift 写 RPC，其他的做的不多。
 
-* `_includes/custom-nav-links.html` - Additional nav links to insert at the
-  end of the list of links in the sidebar.
+数据库方面，MySQL 日常打交道比较多吧，用的大概也是比较熟悉的，常见的一些问题基本上都知道怎么解决。Redis 偶尔用，用的少。公司也用 ElasticSearch，但是跟我的业务关系不大。MongoDB 自己玩过，但是是很老的版本了。
 
-  Pro-tip: The `nav`s in the sidebar are flexboxes. Use the `order` property
-  to order your links.
+## Secondary Skills
 
-* `_includes/custom-icon-links.html`- Additional icon links to insert at the
-  end of the icon links at the bottom of the sidebar. You can use the `order`
-  property to re-order.
+~~Windows & UWP 平台入门开发者，主要使用 C# 语言。~~ UWP 已经凉了，C# 也有两年没正经写过了吧，这条划掉吧。
 
-* `_includes/favicons.html` - Replace references to `favicon.ico` and
-  `favicon.png` with your own favicons references.
+对于 Windows 操作系统有丰富的维护经验，熟悉 BIOS 和 UEFI 平台下的启动配置、常见故障排除等。熟练掌握 Windows 系统的定制、高级部署。熟练掌握适合各种情况的 Windows PE 定制与部署。说人话就是修电脑经验丰富，估计以后老了楼下开个铺子，起码养活自己我还是有信心的。
 
-* `_includes/font-includes.html` - The Abril Fatface font used for the site
-  title is loaded here. If you're overriding that font in the CSS, be sure
-  to also remove the font load reference here.
+花式路由器玩家。喜欢折腾 OpenWrt 路由器，魔改过几台路由。天天折腾 OpenWrt BuildRoot。在这个过程对 Linux 内核还有 Lua 有了一定的了解。~~目前正在尝试做一款图形化的 OpenWrt BuildRoot 辅助工具，名字暂定为 LedeForge。~~ 坑了。
 
-### New Features
+焊接技能，DIY 过 U 盘。为路由器更换过 Ram 芯片。希望有机会玩一玩热风枪。
 
-* Hydeout adds a new tags page (accessible in the sidebar). Just create a
-  new page with the tags layout:
+树莓派 2B、3B、3B+、4B、Zero W 用户，额外搞过一点点 ATTiny85 ESP8266 之类。对嵌入式开发一直很感兴趣。
 
-  ```
-  ---
-  layout: tags
-  title: Tags
-  ---
-  ```
+## Trying to learn
 
-* Hydeout adds a new "category" layout for dedicated category pages.
-  Category pages are automatically added to the sidebar. All other pages
-  must have `sidebar_link: true` in their front matter to show up in
-  the sidebar. To create a category page, use the `category` layout"
+对系统底层有一定兴趣，然而技能树尚未扩展到相关领域。
 
-  ```
-  ---
-  layout: category
-  title: My Category
-  ---
+不~~怎么~~会写 Web 前端，基本上也就会一丁点 JQuery 和一点点 Bootstrap，深感前端圈太乱，不想趟浑水。
 
-  Description of "My Category"
-  ```
+## Gaming
 
-* A simple redirect-to-Google search is available. Just create a page with
-  the `search` layout.
+* 籼米。最喜欢五前和仙六。闲情 er（看我那篇吐槽神舞的 blog 就知道了）。微博 @yichya 求互粉。
+* MC 手残建筑师，主要玩红石。Besiege 手残机械师，基本上弃坑了。
+* Starcraft 2 剧情党。也基本上弃坑了
+* 偶尔玩 FPS，最喜欢 Crysis。吃鸡不太感兴趣。
+* Steam 上还有 Just Cause 3 等一些游戏，求一波好友。
 
-  ```
-  ---
-  layout: search
-  title: Google Search
-  ---
-  ```
+# 近期准备填的坑
 
-* Disqus integration is ready out of the box. Just add the following to
-  your config file:
-
-  ```yaml
-  disqus:
-    shortname: my-disqus-shortname
-  ```
-
-  If you don't want Disqus or want to use something else, override
-  `comments.html`.
-
-* For Google Analytics support, define a `google_analytics` variable with
-  your property ID in your config file.
-
-There's also a bunch of minor tweaks and adjustments throughout the
-theme. Hope this works for you!
+1. [x] 一些个人隐私防护、数据安全之类的碎碎念
+2. [ ] Devices 系列（EC20，Odroid Go，Anker 的充电器，小米的新电源，树莓派 4B），另外 Devices 系列建设起来，最好手里有三四样东西的时候就水一篇
+3. [x] NAS 迁移到 Manjaro 的记录，加上网络、docker、准入相关等一些东西的进展
+4. [ ] 工作上的日常吐槽，大概四月中旬之后拿了年终奖会写
+5. [ ] Hydeout 主题升级
