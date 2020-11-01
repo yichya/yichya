@@ -21,4 +21,18 @@ tags:
 
 听说最近 G 楼很多屋子都因为各种原因空出来了，nova 和十三他们也在申请其他教室，好日子要来了。
 
+Update：过了几天之后又申请到了 G548，屋子自然是多多益善可惜离 G316 实在是太远了，爬两层楼不说还得横向穿过大半个 G 楼
+
+![](../assets/images/sssta-back-to-life/4.jpg)
+
+![](../assets/images/sssta-back-to-life/5.jpg)
+
+![](../assets/images/sssta-back-to-life/6.jpg)
+
+在里面寻宝的过程中甚至找到了一台矿机，当然搜了一下 Antminer D3 发现已经完全不值钱了可能就一两百块钱。
+
+![](../assets/images/sssta-back-to-life/antminer_d3.jpg)
+
+还有些破显卡啥的不提了。实名羡慕寻宝的乐趣
+
 下次去成都的话一定要从西安路过一下去看看，顺便跟各位强者约饭啊哈哈哈哈
