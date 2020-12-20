@@ -48,8 +48,14 @@ sidebar_link: true
 
 # 近期准备填的坑
 
-1. [x] 一些个人隐私防护、数据安全之类的碎碎念
-2. [ ] Devices 系列（EC20，Odroid Go，Anker 的充电器，小米的新电源，树莓派 4B），另外 Devices 系列建设起来，最好手里有三四样东西的时候就水一篇
-3. [x] NAS 迁移到 Manjaro 的记录，加上网络、docker、准入相关等一些东西的进展
-4. [ ] 工作上的日常吐槽，大概四月中旬之后拿了年终奖会写
-5. [ ] Hydeout 主题升级
+* NAS / 梯子 / OpenWrt ~~年~~日常迭代
+    * `/opt/persistent` 的使用体验，甚至可能考虑真的把 OS 放在 U 盘上
+    * virtio-fs，hugepage，uefi
+    * Xray 相关的一些迭代
+    * 可能的硬件升级（但估计逃离帝都前大概率是不会考虑）
+* Gadgets 中比较特别的几个
+    * ARM MacBook Pro
+    * 一些新买的 DIY 小东西
+* 一些个人隐私防护、数据安全之类的碎碎念
+* 工作上的日常吐槽，大概四月中旬之后拿了年终奖会写
+* Hydeout 主题升级
