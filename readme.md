@@ -4,58 +4,48 @@ title: About
 sidebar_link: true
 ---
 
+`Last Updated: 2021.05.05`
+
 > A good soldier knows there's only one thing he can rely on when the chips are down: Not his cutting-edge intel, not his state of the art equipment, and not his top of the line weapon. Just himself: It took me a long time to remember that. 
 >
 > --- Laurence "Prophet" Barnes
 
-大概是一个无聊的人（QC）。常以草民自称。
-
-重度社交恐惧症患者，努力尝试自救中。
-
-喜欢 DIY，羡慕动手能力强的技术宅。
+大概是一个无聊的人（QC）。常以草民自称。想成为动手能力强的技术宅。重度社交恐惧症患者，已经放弃自救了。
 
 ## Primary Skills
 
-目前主修 Web 后端方向技能。主要使用 Python 和 Go。Python 的话，Web 方面公司主要用 Django，但是 ORM 用的是 SQLAlchemy 而不是 Django 自带的，自己也用过 Tornado、Flask 还有 Node 世界里面的 Express 这些常见 Web 框架。RPC 的话主要是魔改 Thrift，基于一个旧版本加一点限流监控，Service Mesh 代理之类。Go 目前用的偏多一点，但是只用魔改 Thrift 写 RPC，其他的做的不多。
+目前主要靠 Go 和 Python 混饭吃，常用的基础组件（MySQL，Docker 之类）也还算比较熟一些。
 
-数据库方面，MySQL 日常打交道比较多吧，用的大概也是比较熟悉的，常见的一些问题基本上都知道怎么解决。Redis 偶尔用，用的少。公司也用 ElasticSearch，但是跟我的业务关系不大。MongoDB 自己玩过，但是是很老的版本了。
+平时在公司主要做技术建设相关的事情（也可以理解为打杂，啥事都做）。
 
 ## Secondary Skills
 
-~~Windows & UWP 平台入门开发者，主要使用 C# 语言。~~ UWP 已经凉了，C# 也有两年没正经写过了吧，这条划掉吧。
+OpenWrt 半吊子开发者（指天天自己编译 OpenWrt，偶尔写点 packages 和 LuCI 插件，从来没给官方提交过 Merge Request）。
 
-对于 Windows 操作系统有丰富的维护经验，熟悉 BIOS 和 UEFI 平台下的启动配置、常见故障排除等。熟练掌握 Windows 系统的定制、高级部署。熟练掌握适合各种情况的 Windows PE 定制与部署。说人话就是修电脑经验丰富，估计以后老了楼下开个铺子，起码养活自己我还是有信心的。
+之前花过不少精力折腾 Windows PE，但算下来也有个六七年没碰过了，现在的水平大概也就是勉强能装个系统。
 
-花式路由器玩家。喜欢折腾 OpenWrt 路由器，魔改过几台路由。天天折腾 OpenWrt BuildRoot。在这个过程对 Linux 内核还有 Lua 有了一定的了解。~~目前正在尝试做一款图形化的 OpenWrt BuildRoot 辅助工具，名字暂定为 LedeForge。~~ 坑了。
+有些非常非常初级的 DIY 能力，不过没啥成品。工具买了一堆，树莓派、esp8266、esp32 什么的也弄了好多，但基本都在吃灰了。
 
-焊接技能，DIY 过 U 盘。为路由器更换过 Ram 芯片。希望有机会玩一玩热风枪。
-
-树莓派 2B、3B、3B+、4B、Zero W 用户，额外搞过一点点 ATTiny85 ESP8266 之类。对嵌入式开发一直很感兴趣。
+总结下来就是成了社畜之后之前的技能基本都荒废了，说起来就非常的蓝瘦。
 
 ## Trying to learn
 
-对系统底层有一定兴趣，然而技能树尚未扩展到相关领域。
+近期在尝试入坑 Rust，也没啥原因，确实觉得 Rust 路子走对了，希望能挤出足够多的时间。
 
-不~~怎么~~会写 Web 前端，基本上也就会一丁点 JQuery 和一点点 Bootstrap，深感前端圈太乱，不想趟浑水。
+如果还有时间的话，想学学 TypeScript，确实也是觉得 TypeScript 的类型系统真的很不错。
 
 ## Gaming
 
-* 籼米。最喜欢五前和仙六。闲情 er（看我那篇吐槽神舞的 blog 就知道了）。微博 @yichya 求互粉。
-* MC 手残建筑师，主要玩红石。Besiege 手残机械师，基本上弃坑了。
-* Starcraft 2 剧情党。也基本上弃坑了
-* 偶尔玩 FPS，最喜欢 Crysis。吃鸡不太感兴趣。
-* Steam 上还有 Just Cause 3 等一些游戏，求一波好友。
+籼米。最喜欢五前和仙六。算是闲情 er（看我那篇吐槽神舞的 blog 就知道了），但是逐渐开始觉得大宇和软星是有些问题。。。
 
-# 近期准备填的坑
+Steam 上零零散散整了一百来个游戏了，不过现在比较难受的是没时间玩。
 
-* NAS / 梯子 / OpenWrt ~~年~~日常迭代
-    * `/opt/persistent` 的使用体验，甚至可能考虑真的把 OS 放在 U 盘上
-    * virtio-fs，hugepage，uefi
-    * Xray 相关的一些迭代
-    * 可能的硬件升级（但估计逃离帝都前大概率是不会考虑）
-* Gadgets 中比较特别的几个
-    * ARM MacBook Pro
-    * 一些新买的 DIY 小东西
-* 一些个人隐私防护、数据安全之类的碎碎念
-* 工作上的日常吐槽，大概四月中旬之后拿了年终奖会写
-* Hydeout 主题升级
+近期日常大概就玩玩阴阳师什么的，偶尔会玩玩极限竞速地平线，看心情。
+
+# Todo
+
+除去定期更新的个人总结、Gadgets 系列、NAS 系列之外，目前已经想好的一些 Topic，不过可能是相对长期的
+
+* 逃离帝都攻略（先逃离了再说）
+* 一些个人隐私防护、数据安全之类的碎碎念（其实是写了一部分的，但是很多东西还没想清楚）
+* 工作相关的吐槽（不确定会咕咕咕到什么时候了）
