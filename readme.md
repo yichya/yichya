@@ -4,13 +4,15 @@ title: About
 sidebar_link: true
 ---
 
-`Last Updated: 2021.05.05`
+`Last Updated: 2021.09.08`
 
 > A good soldier knows there's only one thing he can rely on when the chips are down: Not his cutting-edge intel, not his state of the art equipment, and not his top of the line weapon. Just himself: It took me a long time to remember that. 
 >
 > --- Laurence "Prophet" Barnes
 
 大概是一个无聊的人（QC）。常以草民自称。想成为动手能力强的技术宅。重度社交恐惧症患者，已经放弃自救了。
+
+![Account Stat](https://gh-stat.vercel.app/api?username=yichya&count_private=true&show_icons=true&hide_title=true&theme=graywhite&cache_seconds=1800)
 
 ## Primary Skills
 
