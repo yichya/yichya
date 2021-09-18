@@ -16,6 +16,9 @@ hidden: true
 
 ![](../assets/images/if-you-are-looking-for-me/end.jpg)
 
-如果想知道我为什么选择离职，可以在下面评论区回复 `+1`，想看的人足够多了会更新在这里。
+如果想知道我为什么选择离职，可以在下面评论区回复 `+1`，想看的人足够多了会更新在这里。这个坑填好前，可以先看下面的：
 
-顺便，推荐一本老书 [https://book.douban.com/subject/3267945/](https://book.douban.com/subject/3267945/)
+* Riddler 1: [但这一切值得吗？](../riddler-1/)
+* _持续更新中_
+
+最后，推荐一本老书 [https://book.douban.com/subject/3267945/](https://book.douban.com/subject/3267945/)
