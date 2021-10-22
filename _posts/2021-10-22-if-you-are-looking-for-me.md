@@ -14,6 +14,8 @@ hidden: true
 
 如果上面的链接没有帮到你，并且也没有其他办法联系到我的话，可以在下面评论区留言，我会不定期回复。请注意必要的信息脱敏。
 
+如果有不便于公开的交流需求，可以使用 [Livegram: yichya](https://t.me/yichya_livegram_bot)，请自备梯子。
+
 ![](../assets/images/if-you-are-looking-for-me/end.jpg)
 
 最后，推荐一本老书 [https://book.douban.com/subject/3267945/](https://book.douban.com/subject/3267945/)
