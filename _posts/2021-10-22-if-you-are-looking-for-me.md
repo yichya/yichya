@@ -16,6 +16,6 @@ hidden: true
 
 如果有不便于公开的交流需求，可以使用 [Livegram: yichya](https://t.me/yichya_livegram_bot)，请自备梯子。
 
-![](../assets/images/if-you-are-looking-for-me/end.jpg)
+![](../assets/images/if-you-are-looking-for-me/true_end.jpg)
 
 最后，推荐一本老书 [https://book.douban.com/subject/3267945/](https://book.douban.com/subject/3267945/)
