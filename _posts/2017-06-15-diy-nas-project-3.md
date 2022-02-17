@@ -2,7 +2,7 @@
 layout: post
 title:  DIY NAS Project (3) Hardware Upgrade & Disaster
 categories:
-  - Small Things
+  - NAS and OpenWrt
 tags:
   - openwrt
   - lede

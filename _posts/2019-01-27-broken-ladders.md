@@ -2,7 +2,7 @@
 layout: post
 title: Broken Ladders
 categories:
-  - Small Things
+  - NAS and OpenWrt
 tags:
   - openwrt
   - router

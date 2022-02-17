@@ -2,7 +2,7 @@
 layout: post
 title: 定制 OpenWrt 固件 (1) 透明代理
 categories:
-  - Small Things
+  - NAS and OpenWrt
 tags:
   - openwrt
   - lede

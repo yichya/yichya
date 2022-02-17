@@ -2,7 +2,7 @@
 layout: post
 title:  Gevent（3）调度核心：gevent.hub 
 categories:
-  - Large Things
+  - Technology
 tags:
   - gevent
   - python

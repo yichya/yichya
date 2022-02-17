@@ -2,7 +2,7 @@
 layout: post
 title: DNS Poisoning and Countering
 categories:
-  - Small Things
+  - NAS and OpenWrt
 tags:
   - openwrt
   - lede

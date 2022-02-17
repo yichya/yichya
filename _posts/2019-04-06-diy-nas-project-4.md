@@ -2,7 +2,7 @@
 layout: post
 title:  DIY NAS Project (4) Virtualization Practice & Some More
 categories:
-  - Small Things
+  - NAS and OpenWrt
 tags:
   - openwrt
   - lede

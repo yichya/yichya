@@ -2,7 +2,7 @@
 layout: post
 title: Configure Access Point as Personal Hotspot (OpenWrt)
 categories:
-  - Small Things
+  - NAS and OpenWrt
 tags:
   - openwrt
   - lede

@@ -2,7 +2,7 @@
 layout: post
 title: DIY NAS Project (5) Connectivity Upgrades & Manjaro
 categories:
-  - Small Things
+  - NAS and OpenWrt
 tags:
   - openwrt
   - lede

@@ -2,7 +2,7 @@
 layout: post
 title: MongoDB now with Transaction support
 categories:
-  - Large Things
+  - Technology
 tags:
   - mongodb
   - wiredtiger

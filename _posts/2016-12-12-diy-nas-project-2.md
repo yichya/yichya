@@ -2,7 +2,7 @@
 layout: post
 title: DIY NAS Project (2) Docker and ownCloud
 categories:
-  - Small Things
+  - NAS and OpenWrt
 tags:
   - openwrt
   - lede

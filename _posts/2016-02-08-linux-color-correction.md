@@ -2,7 +2,7 @@
 layout: post
 title: Linux 下的屏幕颜色校正
 categories:
-  - Small Things
+  - Gadgets
 tags:
   - redshift
 ---
