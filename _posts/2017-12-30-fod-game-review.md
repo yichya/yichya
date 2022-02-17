@@ -2,7 +2,7 @@
 layout: post
 title: FOD Game Review
 categories:
-  - Small Things
+  - Gadgets
 tags:
   - game
 ---

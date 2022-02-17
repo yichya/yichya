@@ -2,7 +2,7 @@
 layout: post
 title: 台电 X98Plus 体验 + 系统定制
 categories:
-  - Small Things
+  - Gadgets
 tags:
   - gadget
 ---

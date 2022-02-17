@@ -2,7 +2,7 @@
 layout: post
 title: Doufm for Raspberry Pi (v3)
 categories:
-  - Small Things
+  - Gadgets
 tags:
   - raspberrypi
   - python

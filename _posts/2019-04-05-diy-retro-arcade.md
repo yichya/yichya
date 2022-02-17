@@ -2,7 +2,7 @@
 layout: post
 title: DIY Retro Arcade
 categories:
-  - Small Things
+  - My Own Hackday
 tags:
   - gadget
 ---

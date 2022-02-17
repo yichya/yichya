@@ -2,7 +2,7 @@
 layout: post
 title:  Gevent（4）典型应用：gevent.socket
 categories:
-  - Large Things
+  - Technology
 tags:
   - gevent
   - python

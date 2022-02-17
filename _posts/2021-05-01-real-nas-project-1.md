@@ -2,7 +2,7 @@
 layout: post
 title: Real NAS Project (1) Real Server, ZFS, Connectivity, PodMan
 categories:
-  - Small Things
+  - NAS and OpenWrt
 tags:
   - openwrt
   - lede

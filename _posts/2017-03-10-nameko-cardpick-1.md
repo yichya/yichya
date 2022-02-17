@@ -2,7 +2,7 @@
 layout: post
 title: Card Pick Simulater Based on Nameko & RabbitMQ
 categories:
-  - Large Things
+  - Technology
 tags:
   - gevent
   - python
