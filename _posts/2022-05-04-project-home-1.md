@@ -1,13 +1,13 @@
 ---
 layout: post
-title: The Flat Project (1) Transaction
+title: Project Home (1) Transaction
 categories:
   - Life
 tags:
   - life
 ---
 
-The Flat Project 顾名思义是与新买的房子相关的一切事情，包括二手房交易、装修、家具电器选购、搬家入住等整个流程。
+Project Home 原来叫 The Flat Project，顾名思义是与新买的房子相关的一切事情，包括二手房交易、装修、家具电器选购、搬家入住等整个流程。
 
 因为装修的流程目前完全不确定，这个坑会填多久也并不知道。以及，为了避免个人隐私泄露，大概不会有特别多的图贴上来。
 
