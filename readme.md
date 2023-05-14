@@ -4,7 +4,7 @@ title: About
 sidebar_link: true
 ---
 
-`Last Updated: 2022.07.31`
+`Last Updated: 2023.09.28`
 
 大概是一个无聊的人（QC）。
 
@@ -25,8 +25,9 @@ sidebar_link: true
     * Go（主要混饭吃的家伙）
     * Python（之前主要混饭吃的家伙）
 * DB
-    * TiDB（主要混饭吃的家伙）
+    * TiDB & MongoDB（主要混饭吃的家伙）
     * MySQL（之前主要混饭吃的家伙）
+    * Trino（需要学来以后混饭吃的家伙）
 * 杂七杂八
     * Thrift / GRPC
     * Django / Flask
@@ -64,12 +65,13 @@ sidebar_link: true
 
 目前预定的计划有
 
-* The Flat Project（逃离帝都计划的一部分，依目前装修进度，预计是在国庆期间完成，今年国庆大概率不会有 Vacation 2022 了）
-    * 装修相关 & 家具家电 & 家庭网络 & 智能家居
-* Real NAS Project 2（因为涉及到重建新家的家庭网络，估计也会在国庆期间完成）
-    * netdata & UPS & Root on ZFS & 网络结构调整
+* Vacation 2023.2
+    * 长沙 + 重庆，十月在家的日子会补完
+* Project Home
+    * 下次应该会是第四篇个人工作区介绍，预计是十月份再拿一些东西回来之后的事儿了
 * Traffic Accident（父亲交通事故处理相关，希望大家永远用不上这些经验）
     * 治疗与康复、赔偿相关（交通事故 & 工伤保险）
+    * 预计是八九月份走完一些流程 & 把内固定取出之后再整理一下，不过时间比较久了，不一定能整理出来
 * 欠下的一些在上家工作时的回忆录（其实有些懒得写了，诸君且等楼塌便是）
 
 ## Statistics
