@@ -131,8 +131,7 @@ Manjaro 对一个大版本内核只留一个小版本，不像 Ubuntu 之类会�
 
 ```bash
 # original command: make V=99 -16
-sudo strace -u yichya -ff -o ~/duplicate_test_2/strace.txt make V=99 -j16 > /home/yichya/duplicate_test_2/stdout.txt 2> 
-/home/yichya/duplicate_test_2/stderr.txt
+sudo strace -u yichya -ff -o ~/duplicate_test_2/strace.txt make V=99 -j16 > /home/yichya/duplicate_test_2/stdout.txt 2> /home/yichya/duplicate_test_2/stderr.txt
 ```
 
 跑了两遍，然后得到了加起来 11G+，一共 360000+ 个文件（每一个文件对应一个过程中产生的 pid）的系统调用追踪，只能苦一苦 VSCode 了。
