@@ -233,7 +233,7 @@ yichya@yichya-nas ~/duplicate_test_2> ls -1 | wc -l
 
 同时配置一下域名解析，比如下面都以 `*.home.yichya.dev` 为例，这里解析到家中 OpenWrt 的 Tinc 地址，这样所有接入 Tinc 大局域网的设备都可以直接在这个域名上正常使用 HTTPS 访问
 
-![](../assets/images/real-nas-project-3/google_domains.png)
+![](../assets/images/real-nas-project-3/dns.png)
 
 ## Add Rebind Protection Exemption
 

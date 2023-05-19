@@ -38,3 +38,5 @@ github:
 permalink:   /:title/
 disqus:
   shortname:  testtest
+
+timezone: Asia/Shanghai
