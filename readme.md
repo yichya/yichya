@@ -55,7 +55,8 @@ sidebar_link: true
     * TypeScript（想学，不过没啥动力）
 * Gaming
     * 籼米。最喜欢五前和仙六。曾经混闲情，但这些年基本已经退圈了，当然几家的新作都会关注
-    * 手游只玩阴阳师，然而是个签到 2000+ 天的咸鱼
+    * 阴阳师（应声虫（然而是个签到 2000+ 天的咸鱼
+    * 崩铁 `116172681`
     * Steam [`yichya`](https://steamcommunity.com/id/yichya/)
     * Switch `SW-2107-2362-1147`
 * Music
@@ -65,8 +66,6 @@ sidebar_link: true
 
 目前预定的计划有
 
-* Vacation 2023.2
-    * 长沙 + 重庆，十月在家的日子会补完
 * Project Home
     * 下次应该会是第四篇个人工作区介绍，预计是十月份再拿一些东西回来之后的事儿了
 * Traffic Accident（父亲交通事故处理相关，希望大家永远用不上这些经验）
