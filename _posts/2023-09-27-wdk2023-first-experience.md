@@ -90,6 +90,8 @@ NanaZip 是一个重新封装了一下并且上架 Microsoft Store 的 7-Zip，�
 [24855.488319] hrtimer: interrupt took 43241303 ns
 ```
 
+Update：等了一年似乎终于有人修这个问题了 [https://github.com/microsoft/WSL/issues/10667](https://github.com/microsoft/WSL/issues/10667)
+
 加上公司的网络环境有点复杂，会屏蔽 NAT 后面的设备（具体不知道是怎么做的），而且偶尔会需要 VPN 访问测试环境的数据库。草民之前的用法是通过一个 OpenWrt 虚拟机统一中转（顺便翻墙），但 WSL2 的交换机配起来有些麻烦，OpenVPN 弄起来也不方便，上面的卡顿问题也没法解决，最终还是放弃了。
 
 # Working with Hyper-V
