@@ -15,7 +15,7 @@ article + *, .post-body ~ section {
 
 .post, .page {
   .content {
-    li + li {
+    li {
       margin-top: .25rem;
     }
   }
