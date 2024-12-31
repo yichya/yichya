@@ -3,6 +3,7 @@ layout: post
 title: Network Latency Monitoring with Prometheus
 categories:
   - NAS and OpenWrt
+  - Technology
 tags:
   - openwrt
   - lede
