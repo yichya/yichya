@@ -15,7 +15,7 @@ tags:
 
 草民做这件事的目的其实说起来非常简单。从公司到家的网络结构存在两种状态：通过旁边的阿里云 VPS 中转和 NAT 打洞直连。这两种状态下的网络存在许多区别，简单来说中转的延迟、带宽表现都不如直连，而且还会有一些奇奇怪怪的丢包问题（似乎是特定特征的 TCP 包在特定路径上有概率被丢掉，比如从公司到家的 TLS Client Hello 有的时候就百分百会被丢，但是同一时刻从家到公司的就不会被丢，或者从阿里云直接访问两端也都正常，不晓得是公司还是阿里云上有什么奇怪的防火墙）。
 
-![](../assets/images/real-nas-project-4/intro.jpeg)
+![](../assets/images/network-latency-monitoring-prometheus/intro.jpeg)
 
 从上面这张图（怎么画出来的下面会介绍）可以看的出来有明显的两个不同等级的延迟：高一些的是中转，低一些的是直连。令人头疼的是，这两种状态的切换十分随机，并不能找到什么规律，于是考虑先收集信息记录下状态，遇到一些奇怪问题的时候也更容易确定是否是网络相关原因导致。
 
@@ -31,7 +31,7 @@ tags:
 
 Smokeping 的一张图上的信息非常丰富：延迟、抖动、丢包都有，非常直观（下面随便找了一个网图
 
-![](../assets/images/real-nas-project-4/smokeping.png)
+![](../assets/images/network-latency-monitoring-prometheus/smokeping.png)
 
 而且能支持的 Prober 也比较丰富，除了 Ping 还有 HTTP / DNS 之类（下面这个图是草民自己后面添加用来观测梯子状态的
 
@@ -83,7 +83,7 @@ probe_success 1
 
 然后就可以用 `probe_icmp_duration_seconds{phase="rtt"}` 画图，当然要加上 `instance` 过滤。这个指标是一个 Gauge，简单来说就是只有一个值，一般都用来上报什么温度、连接数之类的。如果把延迟当作链路的固定物理属性的话，跟温度好像也能勉强算一类东西（
 
-![](../assets/images/real-nas-project-4/blackbox.jpeg)
+![](../assets/images/network-latency-monitoring-prometheus/blackbox.jpeg)
 
 直接用这个指标画出来的图似乎很不稳定，经常会有一些极大值出现，影响对指标的判断；遇到丢包之类情况图上又会体现为 0 值，稍微丢一点儿包整个图就全都是大坑，几乎都没法看了。
 
@@ -95,7 +95,7 @@ probe_success 1
 
 Cloudprober 功能十分全面，支持很多协议，而且自带一个简单 GUI 可以显示成功率（这个 UI 就很有 Google 早期产品的风格，好评）
 
-![](../assets/images/real-nas-project-4/cloudprober.jpeg)
+![](../assets/images/network-latency-monitoring-prometheus/cloudprober.jpeg)
 
 然而吧，同样可能是来自 Google 的关系，官方例子的配置用了 pbtext（都找不到能高亮这玩意儿的东西，虽然也可以用 yaml），而且文件结构相对比较复杂。比如下面分别是一个过代理的 HTTP（上图）和一个 Ping（下面的 Metrics 示例）：
 
@@ -178,7 +178,7 @@ Histogram 还可以取出百分比分布。选择另一台机器 `192.168.123.13
 
 再利用 Series Override 中的 Graph Style > Fill Below To 进行颜色填充：
 
-![](../assets/images/real-nas-project-4/quantile.png)
+![](../assets/images/network-latency-monitoring-prometheus/quantile.png)
 
 从这张图上得到的结果其实就已经有点 Smokeping 那味儿了，调整一下颜色和透明度几乎可以以假乱真，但是对于上面这张图（192.168.123.13 是一台海外机器）似乎大部分时间几条线都是平行的，这就是接下来要谈到的「预先指定分桶」带来的精度问题了。
 
@@ -237,7 +237,7 @@ prometheus_engine_query_duration_seconds_count{slice="inner_eval"} 8276
 
 一样做颜色填充后可以得到下面这张图，可以看到这张图顶部的线范围明显更小，说明精度提升有效
 
-![](../assets/images/real-nas-project-4/gauge_quantile.png)
+![](../assets/images/network-latency-monitoring-prometheus/gauge_quantile.png)
 
 但是又受到了丢包导致 Scrape 到 0 的影响。那么用什么办法处理呢？
 
@@ -248,7 +248,7 @@ prometheus_engine_query_duration_seconds_count{slice="inner_eval"} 8276
 
 成功筛掉 0 点之后，图就很完美了。如果真的链路特别差以至于一段时间全是 0，图上的线会直接断开，不影响正常读图。
 
-![](../assets/images/real-nas-project-4/gauge_quantile_filtered.png)
+![](../assets/images/network-latency-monitoring-prometheus/gauge_quantile_filtered.png)
 
 这张图上也可以更清晰的看到精度提升带来的信息量增加。接下来把上面几种方式得到的数据做一下对比
 
@@ -256,7 +256,7 @@ prometheus_engine_query_duration_seconds_count{slice="inner_eval"} 8276
 
 依然选择 `192.168.123.13` 这个丢包比较严重的海外机器，把用几种方式得到的中位数 / 平均数叠在一张图上观察：
 
-![](../assets/images/real-nas-project-4/compare.png)
+![](../assets/images/network-latency-monitoring-prometheus/compare.png)
 
 上面这张图可以比较明显看出几种指标的对比。平均数在不筛掉 0 的情况下偏差非常大，筛掉 0 的情况也可能受到波动带来的极大值影响，利用参数为间隔 20ms 的 Histogram 分桶得到的中位数则无法感知到 5ms 左右的延迟波动。
 

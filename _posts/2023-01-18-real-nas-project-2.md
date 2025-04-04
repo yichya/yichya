@@ -136,9 +136,9 @@ HOOKS="base udev autodetect modconf block keyboard keymap zfs filesystems"
 做完上一步之后，先重启进 emergency 模式，方法是临时改 GRUB 启动参数。
 
 * 开机，自检快结束的时候狂按 ESC
-* 看见 GRUB 菜单之后按 E 修改第一行
-* 把内核启动命令行上的 `root=<any>` 删掉
-* 按 F10 启动，等待 shell 出现
+* 看见 GRUB 菜单之后
+  * 按 E 修改第一行，把内核启动命令行上的 `root=<any>` 删掉
+  * 按 F10 启动，等待 shell 出现
 
 shell 出来之后手动 import zpool 并把 rootfs 挂到 `/new_root`，如果打算给 zpool 改名也可以在这个时候操作（比如草民其实是在这里把 zpool 的名字从 nas 改成的 opt）
 
