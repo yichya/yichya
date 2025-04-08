@@ -111,7 +111,7 @@ Tinc 在局域网内的 Peer 探测似乎不是很好用，经常要从某个网
 很容易想到几个解决方案：
 
 * 保证 OpenWrt 1 的 IP 地址不变，在 OpenWrt 2 上直接用 IP 地址连接
-  * Gateway 是运营商的接入设备，上面不太好搞静态 DHCP 分配，个人也不太喜欢这么做；直接指定静态 IP 更容易出问题
+  * Gateway 是运营商的接入设备，上面不太好搞静态 DHCP 分配，草民也不太喜欢这么做；直接指定静态 IP 更容易出问题
 * Tinc 的节点地址更新只能通过 DNS 来完成，所以找个 DDNS 域名记录 OpenWrt 1 的内网 IP，在 OpenWrt 2 上用这个域名连接
   * 也算是相对比较常规的用法，不过草民手头没有合适的域名，而且跟上面优选 IP 一样会遇到缓存 / DDNS 服务商相关的问题
 * 可以先走其他节点建立初步连接，再要求其中一端提供自己局域网内的地址用以直连，可以不用依赖外部服务
@@ -128,7 +128,7 @@ ifstatus ${QUERY_STRING} | jsonfilter -e '@["ipv4-address"][0].address'
 放在 OpenWrt 1 的 `/www/cgi-bin/address.v4`，就可以通过 LuCI 用的那个 uhttpd 直接访问：
 
 ```sh
-# curl 192.168.123.1/cgi-bin/address.v4?wan
+# curl http://192.168.123.1/cgi-bin/address.v4?wan
 192.168.1.4
 ```
 
@@ -167,6 +167,38 @@ Address = openwrt.dialer.check
 ```
 
 OpenWrt 2 上的 Tinc 启动时还不能直接连接到 OpenWrt 1 上，但能够连接到 Cloud 加入 Tinc 大局域网，此时就可以通过 192.168.123.1 上的 HTTP 接口拿到局域网地址，然后在本地完成 `openwrt.dialer.check` -> `192.168.1.4` 的解析，Tinc 就可以继续利用这个地址建立直接连接了。虽然其实这么用实际效果也难说，包括之前有提过的走公网的 Tinc 状态监控，其实也没有找到特别明确的标准来确认，这个大概后面还要做一点防火墙规则相关的过滤来区分中转和直连的流量，利用这个数据来确定状态。留作后续的坑吧（
+
+## No More Static IP & Static DHCP Leases
+
+上面说过草民非常不喜欢静态 IP / 静态 DHCP 分配，原因主要有这么几个：
+
+* 草民的设备很多都是没有插键盘显示器的，如果指定静态 IP 又遇上网络结构变动，很容易就失联了
+* 草民的 OpenWrt 变更十分频繁（要同时跟 OpenWrt 和 Xray 的上游改动），每天可能都要更新一两次
+  * OpenWrt 重启并不一定会使所有网络中的设备重新发起 DHCP 请求，这时 OpenWrt 自身还没有 DHCP 分配记录所以没法解析
+    * 一般的解决方式是再配上 Hosts 记录，但静态分配偶尔会重复（网络中已经有一个设备占了坑），此时 Hosts 也会对不上
+
+DHCP 不靠谱，但是对于网关来说还有其他的方式记录稳定的对应关系，比如利用 MAC 地址来查 ARP，当然也有前提：
+
+* 不是网关的话 ARP 记录不能保证是全的，所以不太能这样用
+* MAC 地址要保持不变（所以对于无线网络设备，尤其是比较新的设备一般都会有 MAC 地址自动轮换的功能，这种情况就不适用了）
+  * 这种情况其实 DHCP 也不一定靠谱（设备可能在 DHCP 的过程中不发送主机名），就要考虑 mDNS 之类的其他网络发现能力了
+
+把 ARP 记录关联到域名这件事就可以用跟上面相似的方式解决。把下面这个脚本保存为 `/www/cgi-bin/address.arp`
+
+```sh
+#!/bin/sh
+printf "Content-Type: text/plain\r\nConnection: close\r\n\r\n"
+grep -i ${QUERY_STRING} /proc/net/arp | awk '{print $1}'
+```
+
+这个脚本就可以像这样通过 MAC 地址查出对应的 IP
+
+```sh
+# curl http://127.0.0.1/cgi-bin/address.arp?00:15:5d:0f:e9:02
+10.32.15.208
+```
+
+再利用跟上面一样的机制绑定一个域名即可。除了 IPv4 和 ARP，相似的做法也可以用在 IPv6、NDP 甚至 mDNS 上，也留作后续的坑吧（
 
 ## DoH and More Stable DoH
 
