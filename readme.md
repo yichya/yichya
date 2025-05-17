@@ -4,7 +4,7 @@ title: About
 sidebar_link: true
 ---
 
-`Last Updated: 2023.09.28`
+`Last Updated: 2025.05.18`
 
 大概是一个无聊的人（QC）。
 
@@ -23,11 +23,11 @@ sidebar_link: true
 
 * PL
     * Go（主要混饭吃的家伙）
-    * Python（之前主要混饭吃的家伙）
+    * Python（之前主要混饭吃的家伙，现在工作上也会用到一些）
 * DB
     * TiDB & MongoDB（主要混饭吃的家伙）
     * MySQL（之前主要混饭吃的家伙）
-    * Trino（需要学来以后混饭吃的家伙）
+    * Trino / Postgres（需要学来以后混饭吃的家伙）
 * 杂七杂八
     * Thrift / GRPC
     * Django / Flask
@@ -41,37 +41,42 @@ sidebar_link: true
 * OpenWrt 半吊子开发者
     * [luci-app-xray](https://github.com/yichya/luci-app-xray)
     * [openwrt-hv-tools](https://github.com/yichya/openwrt-hv-tools)
+* Rust 还在学，没干过啥正经事儿
+    * [RSS Pipe](https://github.com/yichya/rss_pipe)
+    * [GeoData Reader](https://github.com/yichya/geodata_reader)
 * 一丢丢嵌入式 DIY 能力
     * [lilygo_ttv_ble](https://github.com/yichya/lilygo_ttv_ble)
     * [DIY Retro Arcade](/diy-retro-arcade/)
-* 之前花过不少精力折腾 Windows PE，但算下来也有个六七年没碰过了，现在的水平大概也就是勉强能装个系统
+* 之前花过不少精力折腾 Windows PE，但太久没碰了。现在的水平也就是勉强能装个系统
 
 ## Hobby
 
-可能是年纪大了，电子杨伟逐渐严重，最近着实怀旧
+一点小乐趣。
 
-* Skills
-    * Rust（在学）
-    * TypeScript（想学，不过没啥动力）
+* Archery
+    * 基本上每天晚上去射箭，偶尔休息日下午也会去（然而还是非常非常菜
 * Gaming
-    * 籼米。最喜欢五前和仙六。曾经混闲情，但这些年基本已经退圈了，当然几家的新作都会关注
-    * 阴阳师（应声虫（然而是个签到 2000+ 天的咸鱼
+    * ~~传统意义上的国产单机游戏~~（已经结束辣
+    * 阴阳师（然而是个签到 3000+ 天的咸鱼
     * 崩铁 `116172681`
     * Steam [`yichya`](https://steamcommunity.com/id/yichya/)
     * Switch `SW-2107-2362-1147`
 * Music
-    * 常听的歌大部分是所谓「中国风」的歌（主要是 2013 - 2017 那段时间的，之后的歌听得很少），加上一部分轻音乐
+    * 常听的歌大部分是所谓「国风」的歌，主要是 2013 - 2017 年的，之后的歌听得不多
+    * 偶尔听一些虚拟歌姬（Medium⁵ / Vsinger 等等这种虚拟）相关的作品，以及一部分轻音乐
 
-## Todo
+## About Blog
 
-目前预定的计划有
+会在 [https://www.yichya.dev](https://www.yichya.dev) 记录一些日常：
 
-* Project Home
-    * 下次应该会是第四篇个人工作区介绍，预计是十月份再拿一些东西回来之后的事儿了
-* Traffic Accident（父亲交通事故处理相关，希望大家永远用不上这些经验）
-    * 治疗与康复、赔偿相关（交通事故 & 工伤保险）
-    * 预计是八九月份走完一些流程 & 把内固定取出之后再整理一下，不过时间比较久了，不一定能整理出来
-* 欠下的一些在上家工作时的回忆录（其实有些懒得写了，诸君且等楼塌便是）
+* Life：思（huai）考（yi）人生
+* My Own Hackday：延续贵协传统，清明自己搞 Hackday（希望能坚持下来）
+* NAS / OpenWrt：日常 NAS / OpenWrt / 梯子相关的迭代
+* Gadgets：买过的一些东西（也包括游戏之类）的折腾记录
+* Play Around：说走就走，出去玩
+* Technology：专业技能上的积累
+
+更新频率基本一两个月一次，大部分又臭又长不值得一看（主要就是自娱自乐
 
 ## Statistics
 
