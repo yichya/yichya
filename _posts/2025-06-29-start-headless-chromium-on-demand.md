@@ -146,4 +146,6 @@ Headless Chromium 的服务还用之前 [Self Hosted (1)](../self-hosted-1) 里�
 
 ![](../assets/images/start-headless-chromium-on-demand/vts.png)
 
+7.11 更新：7.8 号晚上 21:30 又出现了一次跟上面提到的相似的情况，但只持续了 45 分钟左右。算了不管了再炸再说（
+
 虽然不知道 B 站是在搞什么活，但反正最后一次获取到的 Cookie 留下来了，如果下次重启再炸就把它填回去。顺便其实这部分是发 Vacation 2025.1 的时候一起补上的，所以就不再这里写下期预告了（
