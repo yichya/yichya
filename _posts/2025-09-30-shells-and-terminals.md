@@ -137,7 +137,7 @@ bash 在 macOS 上还有一个比较痛的点是因为许可证的原因，版�
   * 结构化的 Shell 则是处理对象，比如 `ls` 返回的是一个 Object List，可以利用 Shell 自身的能力对它进行投影、筛选、排序
 * 很重，自带很多东西
   * 算是结构化 Shell 必须做的一件事，毕竟现存的外部命令并不能直接返回结构化的数据，需要先覆盖最常见的用法
-  * Nushell 本体自带了大部分 `uutils`（当然还不只这些）并做了一些结构化的魔改，PowerShell 自带的东西就更是非常非常多了
+  * Nushell 本体自带了大部分 `uutils`（当然还不只这些）并做了一些结构化的魔改，PowerShell 自带的东西更是非常非常多了
 * 在上一条的基础上却几乎没有做什么 OOBE 相关的努力，默认情况下的 Interactive 体验跟传统的 Shell 几乎没有什么区别
   * Nushell 至少还默认做了历史补全，PowerShell 的这个东西还需要升级一下 PSReadline 再特意启用一下这个功能
   * PowerShell 默认情况下的 Tab 补全能支持 Module 中的命令和参数（但是不如 fish 那样能显示一点帮助），Nushell 则约等于无
