@@ -6,7 +6,7 @@
         {
             "label": "jekyll serve",
             "type": "shell",
-            "command": "jekyll serve",
+            "command": "env BUNDLER_VERSION=2.7.0 jekyll serve",
             "problemMatcher": [],
             "group": {
                 "kind": "build",
